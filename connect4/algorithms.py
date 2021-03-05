@@ -1,12 +1,22 @@
 
-from GameEngine import *
+from .GameEngine import *
 
 ## Minimax algorithm parameters
 POINT_TO_SCORE = 0
+"""
+Factor of conversion between point of winner (see `GameEngine`) and score for the
+algorithms.
+"""
 WORSE_SCORE = -10000
+"""
+Worse score. It's used as indicator of an orrible move.
+"""
 
 # Heurist order for improve alpha-beta pruning
 MOVES_ORDER = []
+"""
+Moves ordered by heuristic.
+"""
 if N_COL % 2 == 1:
     half = int(N_COL/2)
     MOVES_ORDER.append(half)
@@ -18,12 +28,35 @@ else:
     for i in range(half):
         MOVES_ORDER.append(half-1-i)
         MOVES_ORDER.append(half+i)
+
 MIN_SCORE_STEP = 0.5
+"""
+The minimum possible difference between two different scores.
+"""
 
 
 def minimax(moves, depth, self_player):
     """
     This is a NegaMax implemetation with fixed depth.
+
+    Compute the best score reachable from the actual situation.
+
+    Parameters
+    ----------
+    moves: `list`
+        List of moves that  have been done throught the game.
+        A move is a number in interval ``[0,N_COL)``, indicating the
+        chosen column from left to right.
+        Moves do not distinguish wich player did it.
+    depth: `int`
+        Depth of the tree to be explored.
+    self_player: `player_tag`
+        Tag of the current player.
+
+    Returns
+    -------
+    float:
+        Best scores reachable from the actual situation.
     """
     board = Board(moves)
     if not board.valid:
@@ -49,7 +82,29 @@ def minimax(moves, depth, self_player):
 
 def alphabeta(moves, depth, alpha, beta, self_player):
     """
-    We are  assuming that the score of a node is always greater or equal to the score of its children.
+    This is a NegaMax implemetation with fixed depth and alpha-beta pruning.
+
+    Compute the best score reachable from the actual situation.
+    We are assuming that the score of a node is always greater or equal to the score of its children.
+    Parameters
+    ----------
+    moves: `list`
+        List of moves that  have been done throught the game.
+        A move is a number in interval ``[0,N_COL)``, indicating the
+        chosen column from left to right.
+        Moves do not distinguish wich player did it.
+    depth: `int`
+        Depth of the tree to be explored.
+    self_player: `player_tag`
+        Tag of the current player.
+    alpha: float
+        Alpha score of the algorithm.
+    beta: float
+        Beta score of the algorithm.
+    Returns
+    -------
+    float:
+        Best scores reachable from the actual situation.
     """
     board = Board(moves)
     if not board.valid:
@@ -66,7 +121,6 @@ def alphabeta(moves, depth, alpha, beta, self_player):
 
     if score <= alpha:
         return alpha
-
 
     best_score = WORSE_SCORE
     for m in MOVES_ORDER:

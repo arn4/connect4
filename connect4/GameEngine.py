@@ -1,23 +1,87 @@
+"""
+The game engine for Connect4.
+"""
 
 import emoji
 
-from costants import *
+from .costants import *
+
+##########
+# PLAYER #
+##########
 
 def change_player(player):
+    """
+    Return the opposite player.
+
+    Parameters
+    ----------
+    player: `player_tag`
+        The player to be changed.
+    Returns
+    -------
+    `player_tag`
+        The opposite player from the one given.
+    """
     if player == P1:
         return P2
     else:
         return P1
 
 class Player():
+    """
+    Base class for players.
+
+    This class has to be used as father class for Player implementations.
+    All the methods an attributes that contains are need from class `Game`.
+
+    Attributes
+    ----------
+    name: `string`, default: 'Player'
+        Name used to refer to the player.
+    """
     def __init__(self, name = 'Player'):
         self.name = name
 
-    def move(self, board, moves):
+    def move(self, board, moves, self_player):
+        """
+        Make a move.
+
+        This method should return which move the player would like to do
+        given the game situation.
+
+        Parameters
+        ----------
+        board: `Board`
+            Board object of the actual situation.
+        moves: `list`
+            List of moves that  have been done throught the game.
+            A move is a number in interval ``[0,N_COL)``, indicating the
+            chosen column from left to right.
+            Moves do not distinguish wich player did it.
+        self_player: `player_tag`
+            Tag of the current player.
+        Returns
+        -------
+        `int`
+            The move that the player would like to do.
+            A move is a number in interval ``[0,N_COL)``, indicating the
+            chosen column from left to right.
+        Note
+        ----
+        The implementation must take care if the move is allowed or not.
+        """
         return len(moves) % 7 # It's not garantee that the move is allowed!
 
     def game_finished(self):
+        """
+        Method to be called when a Game involving player ha ended.
+        """
         pass
+
+#########
+# BOARD #
+#########
 
 class Board():
     def __init__(self, moves = None):
@@ -194,6 +258,10 @@ class Game():
         else:
             self.insert_coin(self.p2.move(self.board, self.moves, P2), P2)
         self.turn = change_player(self.turn)
+
+    def play_all(self):
+        while not self.finish:
+            self.next()
 
     def __str__(self):
         message_str = ''
