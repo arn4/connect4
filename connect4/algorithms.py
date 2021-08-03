@@ -35,7 +35,7 @@ The minimum possible difference between two different scores.
 """
 
 
-def minimax(moves, depth, self_player):
+def minimax(moves, depth):
     """
     This is a NegaMax implemetation with fixed depth.
 
@@ -50,22 +50,25 @@ def minimax(moves, depth, self_player):
         Moves do not distinguish wich player did it.
     depth: `int`
         Depth of the tree to be explored.
-    self_player: `player_tag`
-        Tag of the current player.
-
     Returns
     -------
     float:
         Best scores reachable from the actual situation.
     """
-    board = Board(moves)
+    board = Board(moves, P1)
     if not board.valid:
         return None
+
+    if len(moves) % 2 == 0:
+        player_has_to_move = P1
+    else:
+        player_has_to_move = P2
+
     w, wp = board.evalutate()
 
     if w != NOBODY:
         score = (N_ROW*N_COL - len(moves))/2 + POINT_TO_SCORE*max(0,wp-4)
-        if w == self_player:
+        if w == player_has_to_move:
             return score
         else:
             return -score
@@ -80,12 +83,13 @@ def minimax(moves, depth, self_player):
             pass
     return best_score
 
-def alphabeta(moves, depth, alpha, beta, self_player):
+def alphabeta(moves, depth, alpha, beta):
     """
     This is a NegaMax implemetation with fixed depth and alpha-beta pruning.
 
     Compute the best score reachable from the actual situation.
     We are assuming that the score of a node is always greater or equal to the score of its children.
+    
     Parameters
     ----------
     moves: `list`
@@ -95,24 +99,33 @@ def alphabeta(moves, depth, alpha, beta, self_player):
         Moves do not distinguish wich player did it.
     depth: `int`
         Depth of the tree to be explored.
-    self_player: `player_tag`
-        Tag of the current player.
     alpha: float
         Alpha score of the algorithm.
     beta: float
         Beta score of the algorithm.
+        
     Returns
     -------
     float:
         Best scores reachable from the actual situation.
     """
-    board = Board(moves)
+    board = Board(moves, P1) # WLOG the first player is P1. 
+    # This algorithm works indipendently from the played game, so it does not need to be consistent with 
+    # the real game where it is used. The only condition is that it returns the correct maximum score
+    # for the player that now has to move.
+
     if not board.valid:
         return None
+
+    if len(moves) % 2 == 0:
+        player_has_to_move = P1
+    else:
+        player_has_to_move = P2
+
     w, wp = board.evalutate(winner_points = False)
     score = (N_ROW*N_COL - len(moves))/2
     if w != NOBODY:
-        if w == self_player:
+        if w == player_has_to_move:
             return score
         else:
             return -score
@@ -125,7 +138,7 @@ def alphabeta(moves, depth, alpha, beta, self_player):
     best_score = WORSE_SCORE
     for m in MOVES_ORDER:
         try:
-            best_score = max(best_score, -alphabeta(moves+[m],depth-1, -beta, -best_score, change_player(self_player)))
+            best_score = max(best_score, -alphabeta(moves+[m],depth-1, -beta, -best_score))
             if best_score >= beta:
                 return beta
         except TypeError:

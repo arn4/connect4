@@ -3,6 +3,8 @@ The game engine for Connect4.
 """
 
 import emoji
+import numpy as np
+from tqdm import tqdm
 
 from .costants import *
 
@@ -73,24 +75,60 @@ class Player():
         """
         return len(moves) % 7 # It's not garantee that the move is allowed!
 
-    def game_finished(self):
+    def finished(self):
         """
-        Method to be called when a Game involving player ha ended.
+        Method to be called when the player is not playing anymore.
         """
         pass
+
+    def reset(self):
+        """
+        Reset the internal state of a player and get ready for another game.
+        """
+        pass
+
 
 #########
 # BOARD #
 #########
 
 class Board():
-    def __init__(self, moves = None):
+    """
+    Board of a Game. Stores the position and thes history of the moves
+    of two player (`P1` and `P2`).
+
+    Attributes
+    ----------
+    valid: `bool`
+        Is the board a valid game situation.
+    board: `list(list(player_tag))`
+        For each column stores the inserted coins from bottom to top.
+        All list are 0-indexed.
+
+        You shouldn't modify this attribute directly. Use :func:`Board.add_move`
+        or :func:`Board.add_moves` instead.
+
+        Examples
+        --------
+        `board[0][5] == P1`:
+            means that in the first column from left, third column
+            from bottom there is a coin from Player 1.
+        `board[3][2] == P1`:
+            means that in the fourth column from left, sixth column
+            from bottom there is a coin from Player 2.
+    """
+    def __init__(self, moves = None, starter = None):
         self.empty()
         self.valid = True
         if moves is not None:
-            self.add_moves(moves, P1)
+            if starter is None:
+                raise ValueError('starter cannot be None when moves is not None.')
+            self.add_moves(moves, starter)
 
     def empty(self):
+        """
+        Empty the board.
+        """
         self.board = [[] for _ in range(N_COL)]
 
     def add_moves(self, moves, starting):
@@ -195,6 +233,35 @@ class Board():
         else:
             return winner, 0
 
+    def as_numpy(self, one_player):
+        """
+        Return the board as numpy.array.
+
+        The returned object has shape = (N_ROW, N_COL) and dtype = np.int8.
+        There's a 1 where `one_player` has a coin, there's -1 where the other
+        player has a coin. Empty cell are 0s.
+
+        Parameters
+        ----------
+        one_player: `player_tag`
+            The tag of the player represented with 1s in the numpy board.
+        
+        Returns
+        -------
+        `np.array`
+            The numpy board.
+        """
+        np_board = np.zeros((N_ROW, N_COL), dtype=np.int8)
+        for icol, col in enumerate(self.board):
+            for irow, cell in enumerate(col):
+                if cell == one_player:
+                    np_board[irow][icol] = int(1)
+                else:
+                    np_board[irow][icol] = int(-1)
+        return np_board
+
+
+
     def __str__(self):
         board_str = ''
         for i in range(N_ROW):
@@ -219,12 +286,14 @@ class Board():
 class Game():
     """
     Player 1 plays with RED, player 2 with YELLOW.
+    Player 1 always starts.
 
-    Columns are from 0 to 6.
+    Columns are numbered from 0 to 6, left to right.
     """
 
     def  __init__(self, player1, player2, starter = P1):
-        self.turn = P1
+        self.starter = starter
+        self.turn = starter
         self.p1 = player1
         self.p2 = player2
         self.board = Board()
@@ -246,12 +315,12 @@ class Game():
         self.board.add_move(move, player)
         self.moves.append(move)
         if self.check_finish():
-            self.p1.game_finished()
-            self.p2.game_finished()
+            self.p1.reset()
+            self.p2.reset()
 
     def next(self):
         if self.finish:
-            return False
+            return
 
         if self.turn == P1:
             self.insert_coin(self.p1.move(self.board, self.moves, P1), P1)
@@ -274,8 +343,59 @@ class Game():
             message_str += '\n'
         else:
             if self.winner != NOBODY:
-                message_str += f'Winner is {self.winner}, with {self.winner_points} points'
+                if self.winner == P1:
+                    winner_name = self.p1.name
+                else:
+                    winner_name = self.p2.name
+                message_str += f'Winner is {winner_name}, with {self.winner_points} points'
             else:
                 message_str += f"It's a tie!"
 
         return f'{self.board}\n {message_str}'
+
+
+class Tournament():
+    def next_starter(self):
+        if self.starting_criteria == 'alternate':
+            self.last_starter = change_player(self.last_starter)
+        elif self.starting_criteria == 'random':
+            self.last_starter = np.random.choice([P1, P2])
+        elif self.starting_criteria == 'p1':
+            self.last_starter = P1
+        elif self.starting_criteria == 'p2':
+            self.last_starter = P2
+        else:
+            raise ValueError(f'Unknwon starting_criteria = {self.starting_criteria}')
+        return self.last_starter
+
+    def reset_counter(self):
+        self.counter = np.zeros((3,3), dtype=np.uint32)
+        
+    def __init__(self, player1, player2, starting_criteria = 'alternate'):
+        self.player1 = player1
+        self.player2 = player2
+        self.reset_counter()
+        self.starting_criteria = starting_criteria
+        self.last_starter = NOBODY
+
+    def play_games(self, to_be_played = 1):
+        for _ in tqdm(range(to_be_played)):
+            g = Game(self.player1, self.player2, self.next_starter())
+            g.play_all()
+            if (g.winner == P1):
+                print(g)
+            self.counter[self.last_starter][g.winner] += 1
+    def finished(self):
+        self.player1.finished()
+        self.player2.finished()
+
+    def __str__(self):
+        return f"""Started by {self.player1.name}, played {self.counter[P1][NOBODY]+self.counter[P1][P1]+self.counter[P1][P2]}:
+    Tied {self.counter[P1][NOBODY]} games
+    {self.player1.name} won {self.counter[P1][P1]} games
+    {self.player2.name} won {self.counter[P1][P2]} games
+Started by {self.player2.name}, played {self.counter[P2][NOBODY]+self.counter[P2][P1]+self.counter[P2][P2]}:
+    Tied {self.counter[P2][NOBODY]} game
+    {self.player1.name} won {self.counter[P2][P1]}
+    {self.player2.name} won {self.counter[P2][P2]}"""
+            

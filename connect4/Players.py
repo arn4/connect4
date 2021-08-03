@@ -23,7 +23,7 @@ class ConsolePlayer(Player):
     def __init__(self, name = 'Console Player'):
         super().__init__(name)
 
-    def move(self, board, moves, self_player):
+    def move(self, board, moves, self_player, print_board = True):
         """
         stdin input for next move.
 
@@ -31,6 +31,8 @@ class ConsolePlayer(Player):
         from left to right.
         Argouments are unused. See :func:`GameEngine.Player.move` for arguments explenation.
         """
+        if print_board:
+            print(board)
         return int(input('Which column? '))-1
 
 class RandomPlayer(Player):
@@ -53,7 +55,7 @@ class RandomPlayer(Player):
         """
         while True:
             c = rnd.randint(0,6)
-            if len(board[c]) < 6:
+            if len(board.board[c]) < 6:
                 return c
 
 class MiniMaxPlayer(Player):
@@ -97,7 +99,7 @@ class MiniMaxPlayer(Player):
             is the opponent score if the player do move `i`.
             If move `i` is not allowed there's a `None` instead of a float.
         """
-        return [minimax(moves + [m], self.depth-1, change_player(self_player)) for m in range(N_COL)]
+        return [minimax(moves + [m], self.depth-1) for m in range(N_COL)]
 
     def move(self, board, moves, self_player):
         """
@@ -143,8 +145,7 @@ class AlphaBetaPlayer(MiniMaxPlayer):
         return [alphabeta(moves = moves + [m],
                             alpha = WORSE_SCORE,
                             beta = -WORSE_SCORE,
-                            depth = self.depth-1,
-                            self_player = change_player(self_player))
+                            depth = self.depth-1)
                 for m in range(N_COL)]
 
 class CenteredAlphaBetaPlayer(AlphaBetaPlayer):
@@ -223,11 +224,11 @@ class PerfectPlayer(Player):
         self.oracle.stderr.readline()
         self.show_scores = show_scores
 
-    def game_finished(self):
+    def finished(self):
         """
         Kill `oracle` process.
 
-        See :func:`GameEngine.Player.game_finished`
+        See :func:`GameEngine.Player.finished`
         """
         self.oracle.terminate()
 
