@@ -7,9 +7,14 @@ POINT_TO_SCORE = 0
 Factor of conversion between point of winner (see `GameEngine`) and score for the
 algorithms.
 """
-WORSE_SCORE = -10000
+WORSE_SCORE = -2*N_ROW*N_COL+1
 """
 Worse score. It's used as indicator of an orrible move.
+"""
+SCORE_TO_LOGPROB = 1.5
+"""
+The probability is propotional to exp(score * SCORE_TO_LOGPROB).
+Higer the value of SCORE_TO_LOGPROB, higher the difference in term of probability.
 """
 
 # Heurist order for improve alpha-beta pruning
@@ -78,7 +83,7 @@ def minimax(moves, depth):
     best_score = WORSE_SCORE
     for m in range(N_COL):
         try:
-            best_score = max(best_score, -minimax(moves+[m],depth-1, change_player(self_player)))
+            best_score = max(best_score, -minimax(moves+[m],depth-1))
         except TypeError:
             pass
     return best_score

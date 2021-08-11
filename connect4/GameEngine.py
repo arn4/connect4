@@ -87,6 +87,17 @@ class Player():
         """
         pass
 
+    def probabilities(self, board, moves, self_player):
+        """
+        Return the vector of the probability for each move.
+
+        These is not need for playing games, but only for supervising them.
+        Returns
+        -------
+        `numpy.array(shape=(N_COL,))`
+            For each column gives the probability that a player 
+        """
+        raise NotImplementedError("This player has not method probabilities()")
 
 #########
 # BOARD #
@@ -260,8 +271,6 @@ class Board():
                     np_board[irow][icol] = int(-1)
         return np_board
 
-
-
     def __str__(self):
         board_str = ''
         for i in range(N_ROW):
@@ -382,8 +391,8 @@ class Tournament():
         for _ in tqdm(range(to_be_played)):
             g = Game(self.player1, self.player2, self.next_starter())
             g.play_all()
-            if (g.winner == P1):
-                print(g)
+            # if (g.winner == P1):
+            #     print(g)
             self.counter[self.last_starter][g.winner] += 1
     def finished(self):
         self.player1.finished()

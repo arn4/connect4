@@ -1,5 +1,6 @@
 import numpy as np
 from multiprocessing import Pool
+from tqdm import tqdm
 
 from .GameEngine import *
 from .costants import *
@@ -12,7 +13,7 @@ class SupervisedGame(Game):
     def  __init__(self, player1, player2, supervisor, starter = P1):
         super().__init__(player1, player2, starter)
         self.supervisor = supervisor
-        self.supervisor_moves = []
+        self.testcases = []
 
     def next(self):
         """
@@ -20,7 +21,7 @@ class SupervisedGame(Game):
 
         Record what supervisor would do in this situation.
         """
-        self.supervisor_moves.append(self.supervisor.move(self.board, self.moves, self.turn))
+        self.testcases.append((self.board.as_numpy(self.turn), self.supervisor.probabilities(self.board, self.moves, self.turn)))
         Game.next(self)
 
     def get_testcases(self, transient = 0):
@@ -40,17 +41,7 @@ class SupervisedGame(Game):
         `list(tuple(numpy.array(shape(N_ROW, NCOLS)), numpy.array(shape(NCOLS))))`
             List of tuples. Each tuple contains the board, in numpy.array format :func:Board.as_numpy
         """
-        testcases = []
-        board = Board()
-        current_player = self.starter
-        for m in self.moves:
-            np_supervisor_move = np.zeros((N_COL,), dtype=np.int8)
-            np_supervisor_move[m] = int(1)
-            testcases.append((board.as_numpy(current_player), np_supervisor_move))
-            board.add_move(m, current_player)
-            current_player = change_player(current_player)
-        
-        return testcases
+        return self.testcases[transient:]
 
 
 
@@ -74,7 +65,7 @@ class DatasetGenerator():
         pool = Pool(processes=n_jobs)
         async_games = [pool.apply_async(self._run_game, ()) for _ in range(n_games)]
         games = []
-        for ag in async_games:
+        for ag in tqdm(async_games):
             games += ag.get() 
         pool.terminate()
         testcases_board, testcases_move = zip(*games)

@@ -4,10 +4,13 @@ Some players implementations for connect4.
 
 import random as rnd
 import numpy as np
+import tensorflow as tf
 import subprocess
+from copy import deepcopy
+import operator
 
 from .GameEngine import *
-from .algorithms import minimax, alphabeta, WORSE_SCORE, MOVES_ORDER, MIN_SCORE_STEP
+from .algorithms import minimax, alphabeta, WORSE_SCORE, MOVES_ORDER, MIN_SCORE_STEP, SCORE_TO_LOGPROB
 
 class ConsolePlayer(Player):
     """
@@ -54,9 +57,16 @@ class RandomPlayer(Player):
         See :func:`GameEngine.Player.move` for arguments explenation.
         """
         while True:
-            c = rnd.randint(0,6)
-            if len(board.board[c]) < 6:
+            c = rnd.randint(0, N_COL-1)
+            if len(board.board[c]) < N_ROW:
                 return c
+    
+    def probabilities(self, board, moves, self_player):
+        p = np.zeros((N_COL,))
+        for c in range(N_COL):
+            if len(board.board[c]) < N_ROW:
+                p[c] = 1.
+        return p/sum(p)
 
 class MiniMaxPlayer(Player):
     """
@@ -101,21 +111,36 @@ class MiniMaxPlayer(Player):
         """
         return [minimax(moves + [m], self.depth-1) for m in range(N_COL)]
 
-    def move(self, board, moves, self_player):
-        """
-        See :func:`GameEngine.Player.move` for arguments explenation.
-        """
-        scores = self.get_opponent_scores_given_move(moves, self_player)
+    def _remove_None_from_scores(self, scores):
         for m in range(N_COL):
             try:
                 scores[m] *= -1
             except TypeError:
                 scores[m] = -float('inf')
+
+    def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
+        scores = self.get_opponent_scores_given_move(moves, self_player)
+        self._remove_None_from_scores(scores)
+        
         if self.show_scores:
+            prob = self.probabilities(board, moves, self_player)
             for m in range(N_COL):
-                print(f'{m+1}: {scores[m]:.1f}')
+                print(f'{m+1}: {scores[m]:.1f}, prob = {prob[m]:.3f}')
 
         return max(range(N_COL), key = lambda i: scores[i] if scores[i] is not None else 2*WORSE_SCORE)
+
+    def probabilities(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.probabilities` for arguments explenation.
+        """
+        scores = self.get_opponent_scores_given_move(moves, self_player)
+        self._remove_None_from_scores(scores)
+
+        p = np.exp(np.array(scores)*SCORE_TO_LOGPROB)
+        return p/sum(p)
 
 class AlphaBetaPlayer(MiniMaxPlayer):
     """
@@ -253,3 +278,62 @@ class PerfectPlayer(Player):
             for m in range(7):
                 print(f'{m+1}: {scores[m]}')
         return max(range(N_COL), key = lambda i: int(scores[i]))
+
+class NeuralNetworkPlayer(Player):
+    def __init__(self, model_path, name = 'NeuralNetwork Player'):
+        super().__init__(name)
+        self.network = tf.keras.models.load_model(model_path)
+
+    def move(self, board, moves, self_player):
+        np_board = board.as_numpy(self_player)
+        np_board = np_board[np.newaxis, ...]
+        scores = (self.network.predict(np_board)).reshape((N_COL,))
+        # print(scores.shape)
+        for c in range(N_COL):
+            if len(board.board[c]) >= N_ROW:
+                scores[c] = -float('inf')
+
+        return np.argmax(scores)
+
+
+class NeuralNetwrokScorePlayer(Player):
+    def __init__(self, model_path, name = 'NeuralNetwork Player'):
+        super().__init__(name)
+        self.model = tf.keras.models.load_model(model_path)
+
+    def _valid_moves(self, board):
+        return [m for m in range(N_COL) if len(board.board[m]) < N_ROW]
+
+    def move(self, board, moves, self_player):
+        valid_moves = self._valid_moves(board)
+        moved_boards = []
+        for m in valid_moves:
+            board_copy = deepcopy(board)
+            board_copy.add_move(m, self_player)
+            moved_boards.append(board_copy.as_numpy(self_player))
+        # Compute the scores in parallel, it's more than 5x faster than one by one calculation
+        valid_moves_scores = self.model.predict(np.array(moved_boards))
+
+        return valid_moves[np.argmax(valid_moves_scores)]
+
+class TwoStagePlayer(Player):
+    def __init__(self, opener, closer, open_stage):
+        super().__init__(f'{opener.name} & {closer.name}')
+        self.played_moves = 0
+        self.opener = opener
+        self.closer = closer
+        self.open_stage = open_stage
+    
+    def move(self, board, moves, self_player):
+        self.played_moves += 1
+        if self.played_moves <= self.open_stage:
+            return self.opener.move(board, moves, self_player)
+        else:
+            return self.closer.move(board, moves, self_player)
+    
+    def reset(self):
+        self.played_moves = 0
+        self.opener.reset()
+        self.closer.reset()
+
+
