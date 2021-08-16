@@ -28,7 +28,7 @@ class EpsilonGreadyPlayer(NeuralNetwrokScorePlayer):
 
 class ScoreConvolutionalNeuralNetwork(Model):
     def __init__(self):
-        super(RLConvNeuralNetwork, self).__init__()
+        super(ScoreConvolutionalNeuralNetwork, self).__init__()
         self.conv = Conv2D(100, kernel_size = 4, input_shape=(N_ROW, N_COL, 1), activation = 'relu')
         self.flatten = Flatten()
         self.hidden1 = Dense(70, activation='relu')
@@ -46,7 +46,7 @@ class ScoreConvolutionalNeuralNetwork(Model):
 
 class ScoreNeuralNetwork(Model):
     def __init__(self):
-        super(RLNeuralNetwork, self).__init__()
+        super(ScoreNeuralNetwork, self).__init__()
         self.flatten = Flatten(input_shape=(N_ROW, N_COL))
         self.hidden1 = Dense(100, activation='relu')
         self.hidden2 = Dense(70, activation='relu')
