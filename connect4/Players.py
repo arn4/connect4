@@ -8,6 +8,8 @@ import tensorflow as tf
 import subprocess
 from copy import deepcopy
 import operator
+import multiprocessing as mp
+from scipy.stats import mode
 
 from .GameEngine import *
 from .algorithms import minimax, alphabeta, WORSE_SCORE, MOVES_ORDER, MIN_SCORE_STEP, SCORE_TO_LOGPROB
@@ -335,5 +337,26 @@ class TwoStagePlayer(Player):
         self.played_moves = 0
         self.opener.reset()
         self.closer.reset()
+
+class PoolPlayer(Player):
+    def __init__(self, players, name = 'Pool Player', n_jobs = None):
+        super().__init__(name)
+        self.players = players
+        self.n_jobs = n_jobs
+
+    def _p2m(self, p, board, moves, self_player):
+        return p.move(board, moves, self_player)
+    
+    def move(self, board, moves, self_player):
+        pool = mp.pool.ThreadPool(self.n_jobs)
+        async_played_moves = [pool.apply_async(self._p2m, (p, board, moves, self_player)) for p in self.players]
+        played_moves = []
+        for apm in async_played_moves:
+            played_moves.append(apm.get())
+        return int(mode(played_moves)[0])
+    
+    def reset(self):
+        for p in self.players:
+            p.reset()
 
 
