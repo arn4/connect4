@@ -5,6 +5,7 @@ The game engine for Connect4.
 import emoji
 import numpy as np
 from tqdm import tqdm
+from abc import ABC, abstractmethod
 
 from .costants import *
 
@@ -27,12 +28,15 @@ def change_player(player):
     """
     if player == P1:
         return P2
-    else:
+    elif player == P2:
         return P1
+    else:
+        raise ValueError(f'Unknown player {player}')
+    
 
-class Player():
+class Player(ABC): # pragma: no cover
     """
-    Base class for players.
+    Abstract class for players.
 
     This class has to be used as father class for Player implementations.
     All the methods an attributes that contains are need from class `Game`.
@@ -42,9 +46,11 @@ class Player():
     name: `string`, default: 'Player'
         Name used to refer to the player.
     """
+    @abstractmethod
     def __init__(self, name = 'Player'):
         self.name = name
 
+    @abstractmethod
     def move(self, board, moves, self_player):
         """
         Make a move.
@@ -65,7 +71,7 @@ class Player():
             Tag of the current player.
         Returns
         -------
-        `int`
+        `int` (move)
             The move that the player would like to do.
             A move is a number in interval ``[0,N_COL)``, indicating the
             chosen column from left to right.
@@ -111,7 +117,13 @@ class Board():
     Attributes
     ----------
     valid: `bool`
-        Is the board a valid game situation.
+        `True` if every call to :func:`Board.add_move` or :func:`Board.add_moves` has been processed correclty.
+        `False` if a call to one of the them can be excuted beacause the column is already full.
+
+        Note
+        ----
+        This does not check if the board is in a valid game situation!
+        There could be a column full of coins of the same player and the valid would be still `True`!
     board: `list(list(player_tag))`
         For each column stores the inserted coins from bottom to top.
         All list are 0-indexed.
@@ -143,23 +155,91 @@ class Board():
         self.board = [[] for _ in range(N_COL)]
 
     def add_moves(self, moves, starting):
+        """
+        Add a list of moves to the board.
+
+        This method adds to the board a list of moves, alternating the player.
+        The player that has done the first move in the list is defined by `starting`.
+
+        Parameters
+        ----------
+        moves: `list(move)`
+            List of moves to be added.
+            A move is a number in interval ``[0,N_COL)``, indicating the
+            chosen column from left to right.
+        starting: `player_tag`
+            Player that moves first.
+        """
         player = starting
         for m in moves:
             self.add_move(m, player)
             player = change_player(player)
 
     def add_move(self, move, player):
+        """
+        Add a move to the board, if it is possible.
+
+        Parameters
+        ----------
+        player: `player_tag`
+            The player to be changed.
+        Returns
+        -------
+        `player_tag`
+            The opposite player from the one given.
+        """
         if not self.is_allowed(move):
             self.valid = False
         self.board[move].append(player)
 
 
     def is_allowed(self, move):
+        """
+        Check if applying `move` is allowed in the current board.
+
+        Parameters
+        ----------
+        move: `int(move)`
+            The move to be checked.
+        Returns
+        -------
+        `bool`
+            `True` if the move is allowed, `False` instead.
+        """
         if len(self.board[move]) >= N_ROW or not self.valid:
             return False
         return True
 
     def evalutate(self, winner_points = True):
+        """
+        Check if one of the player .
+
+        The function can also compute the number of cell that contributes to the victory.
+        A cell is contributing to the victory iff it's filled by a winner coin,
+        and there is a line (vertical, horizontal or diagonal) of at least 4 consecutive 
+        contributing cell that contains it. This number it's named *winner points*.
+
+        Parameters
+        ----------
+        winner_points: `bool`
+            If `True` calculate number of cells contributing to the victory.
+            If `False` calculate only the winner and set the *winner points* to 0.
+
+            If `False` the function has better performance, so you should calculate the winning
+            points only if you really need.
+        Returns
+        -------
+        `tuple(player_tag, unsigned int)`
+            The first element of the tuple is the winner, if any. Otherwise is `NOBODY`.
+            The second element are the *winner points*. If `winner_points = False` or there's 
+            no winner, it'a 0 by default.
+
+            If the board is not valid, the reurn is `tuple(None, None)`
+        Note
+        ----
+        The method assumes that the board is in avalid game situation.
+        If not, it's an undefined behavior.
+        """
         if not self.valid:
             return None, None
         winning_cells = set()
@@ -271,7 +351,7 @@ class Board():
                     np_board[irow][icol] = int(-1)
         return np_board
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         board_str = ''
         for i in range(N_ROW):
             for j in range(N_COL):
@@ -294,10 +374,46 @@ class Board():
 
 class Game():
     """
-    Player 1 plays with RED, player 2 with YELLOW.
-    Player 1 always starts.
+    
+    Player1 is using red color, player2 yellow.
+    Columns are numbered from 0 to `N_COL`, left to right.
 
-    Columns are numbered from 0 to 6, left to right.
+    Attributes
+    ----------
+    starter: `player_tag`
+        The player who starts the game.
+
+    turn: `player_tag`
+        The player that has to move next.
+
+    board: `Board`
+        Board object of the game.
+
+    finish: `bool`
+        `True` only if the game is finished.
+    
+    moves: `list(move)`
+        List of the moves played during the game.
+        It's assumed that player are alternating, starting from `self.starter`.
+    
+    winner: `player_tag`
+        `NOBODY` if the game is not finished or ended with a tie.
+        Otherwise it's the tag of the winner.
+    
+    winner_points: `int`
+        Points scored by the winner. If `winner=NOBODY` then `winner_point=0`.
+
+
+    Parameters
+    ----------
+    player1: Player
+        Player 1 object.
+
+    player2: Player
+        Player 2 object.
+    
+    starter: `player_tag`, default: `P1`
+        The player that is sterting the game.
     """
 
     def  __init__(self, player1, player2, starter = P1):
@@ -314,11 +430,36 @@ class Game():
 
 
     def check_finish(self):
+        """
+        Check if the game is finished.
+
+        Returns
+        -------
+        `bool`
+            `True` if the game is ended, otherwise it returns `False`.
+        """
         self.winner, self.winner_points = self.board.evalutate()
         self.finish = (self.winner != NOBODY) or (len(self.moves) == N_ROW*N_COL)
         return self.finish
 
     def insert_coin(self, move, player):
+        """
+        Player make a move.
+
+        Parameters
+        ----------
+        move: `move`
+            Move that has to be played.
+        player: `player_tag`
+            Player that make the move.
+            Raise `AssertionError` if `player != self.turn`.
+        
+        Note
+        ----
+        This method is meant for internal use only. If you are going to use it, make sure that you know
+        what you are doing.
+        """
+        assert(self.turn == player)
         if not self.board.is_allowed(move):
             raise ValueError(f'The column {move} is already full!')
         self.board.add_move(move, player)
@@ -328,6 +469,11 @@ class Game():
             self.p2.reset()
 
     def next(self):
+        """
+        Make the current turn player move.
+
+        This function calls the method `move` of the Player objects.
+        """
         if self.finish:
             return
 
@@ -338,10 +484,13 @@ class Game():
         self.turn = change_player(self.turn)
 
     def play_all(self):
+        """
+        Play the game untill the finish.
+        """
         while not self.finish:
             self.next()
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         message_str = ''
         if not self.finish:
             message_str += 'Next moves is up to '
@@ -364,9 +513,53 @@ class Game():
 
 
 class Tournament():
+    """
+    Play a tournament between two players.
+
+    Multiple games are played between two player and statics is collected to compare them.
+
+    Attributes
+    ----------
+    player1: Player
+        Player 1 object.
+
+    player2: Player
+        Player 2 object.
+    
+    starting_criteria: `string`
+        Could have 4 values:
+        - `'alternate'`: alternate the staring player, starting from `P1`.
+        - `'random'`: choose at random the player that will start the game.
+        - `'p1'`: Player 1 is always staring.
+        - `'p2'`: Player 2 is always staring.
+
+    last_starter: `player_tag`
+        The player who has started the last game. At the beginnign is `NOBODY`.
+
+    counter: `np.array(shape=(3,3), dtype=np.uint32)`
+        The object who is collecting the statics of the tournament.
+
+        Examples
+        --------
+        - `counter[P1][P1]` -> Games started by `P1` winned by `P1`.
+        - `counter[P2][NOBODY]` -> Games started by `P2` winned by `NOBODY`.
+    """
     def next_starter(self):
+        """
+        Choose the player who is staring next game.
+
+        It also update the `self.last_starter` attribute.
+
+        Returns
+        -------
+        `player_tag`
+            The next starter.
+        """
         if self.starting_criteria == 'alternate':
-            self.last_starter = change_player(self.last_starter)
+            if self.last_starter == NOBODY:
+                self.last_starter = P1
+            else:
+                self.last_starter = change_player(self.last_starter)
         elif self.starting_criteria == 'random':
             self.last_starter = np.random.choice([P1, P2])
         elif self.starting_criteria == 'p1':
@@ -378,6 +571,9 @@ class Tournament():
         return self.last_starter
 
     def reset_counter(self):
+        """
+        Reset all the statics collected by the counter.
+        """
         self.counter = np.zeros((3,3), dtype=np.uint32)
         
     def __init__(self, player1, player2, starting_criteria = 'alternate'):
@@ -388,17 +584,29 @@ class Tournament():
         self.last_starter = NOBODY
 
     def play_games(self, to_be_played = 1):
+        """
+        Play a fixed number of games.
+
+        Parameters
+        ----------
+        to_be_played: `unsigned int`
+            Number of matches to be played.
+        """
         for _ in tqdm(range(to_be_played)):
             g = Game(self.player1, self.player2, self.next_starter())
             g.play_all()
-            # if (g.winner == P1):
-            #     print(g)
             self.counter[self.last_starter][g.winner] += 1
+
     def finished(self):
+        """
+        Methods that must be called when the Tournament is ended.
+        
+        It calls the `finished` method on the Players object.
+        """
         self.player1.finished()
         self.player2.finished()
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         return f"""Started by {self.player1.name}, played {self.counter[P1][NOBODY]+self.counter[P1][P1]+self.counter[P1][P2]}:
     Tied {self.counter[P1][NOBODY]} games
     {self.player1.name} won {self.counter[P1][P1]} games

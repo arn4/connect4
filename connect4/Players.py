@@ -14,7 +14,35 @@ from scipy.stats import mode
 from .GameEngine import *
 from .algorithms import minimax, alphabeta, WORSE_SCORE, MOVES_ORDER, MIN_SCORE_STEP, SCORE_TO_LOGPROB
 
-class ConsolePlayer(Player):
+class FixedMovesPlayer(Player):
+    """
+    Play a predefined sequence of moves.
+
+
+    Attributes
+    ----------
+    name: `string`, default: 'FixedMoves Player'
+        Name used to refer to the player.
+    moves: `list(move)`
+    """
+    def __init__(self, moves, name = 'FixedMoves Player'):
+        super().__init__(name)
+        self.moves = moves
+        self._index_of_next_move = 0
+
+    def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
+        m = self.moves[self._index_of_next_move]
+        self._index_of_next_move += 1
+        return m
+    
+    def reset(self):
+        self._index_of_next_move = 0
+
+class ConsolePlayer(Player): # pragma: no cover
+    # Can't be tested easilly with pytest.
     """
     Play a game throught console.
 
@@ -34,7 +62,8 @@ class ConsolePlayer(Player):
 
         The move is to be inserted in the console is a number from 1 ro N_COL,
         from left to right.
-        Argouments are unused. See :func:`GameEngine.Player.move` for arguments explenation.
+        Argouments are unused.
+        See :func:`GameEngine.Player.move` for arguments explenation.
         """
         if print_board:
             print(board)
@@ -214,9 +243,9 @@ class NoisyAlphaBetaPlayer(AlphaBetaPlayer):
 
     def get_opponent_scores_given_move(self, moves, self_player):
         scores = super().get_opponent_scores_given_move(moves, self_player)
-        for i in range(len(MOVES_ORDER)):
+        for m in MOVES_ORDER:
             try:
-                scores[MOVES_ORDER[i]] += np.random.normal(0., self.noise)
+                scores[m] += np.random.normal(0., self.noise)
             except TypeError:
                 pass
         return scores
@@ -281,16 +310,34 @@ class PerfectPlayer(Player):
                 print(f'{m+1}: {scores[m]}')
         return max(range(N_COL), key = lambda i: int(scores[i]))
 
-class NeuralNetworkPlayer(Player):
-    def __init__(self, model_path, name = 'NeuralNetwork Player'):
+class TensorFlowProabilitiesPlayer(Player):
+    """
+    Player that use a TensorFlow/Keras Neural Network to get the proabilitity (or score) of each
+    possible moves in every situoation.
+
+    The model must have an input layer with the same shape of the one defined in
+    :func:`~GameEngine.Board.as_numpy`; the output layer must have `N_COL` nodes.
+    The node with the highest probability (score) is choosen as the move. 
+
+
+    Attributes
+    ----------
+    name: `string`, default: 'TensorFlowProabilities'
+        Name used to refer to the player.
+    model_path: `string`
+        Path to the TensorFlow model that must be loaded.
+    """
+    def __init__(self, model_path, name = 'TensorFlowProabilities Player'):
         super().__init__(name)
         self.network = tf.keras.models.load_model(model_path)
 
     def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
         np_board = board.as_numpy(self_player)
         np_board = np_board[np.newaxis, ...]
         scores = (self.network.predict(np_board)).reshape((N_COL,))
-        # print(scores.shape)
         for c in range(N_COL):
             if len(board.board[c]) >= N_ROW:
                 scores[c] = -float('inf')
@@ -298,7 +345,24 @@ class NeuralNetworkPlayer(Player):
         return np.argmax(scores)
 
 
-class NeuralNetwrokScorePlayer(Player):
+class TensorFlowScorePlayer(Player):
+    """
+    Player that use a TensorFlow/Keras Neural Network to get the score (or score) of the
+    input configuration.
+
+    The model must have an input layer with the same shape of the one defined in
+    :func:`~GameEngine.Board.as_numpy`; the output layer must have one single node.
+    The output is the score of the configuartion.
+     
+    The player calculate the score of each allowed move he can do and then choose the best.
+
+    Attributes
+    ----------
+    name: `string`, default: 'TensorFlowProabilities'
+        Name used to refer to the player.
+    model_path: `string`
+        Path to the TensorFlow model that must be loaded.
+    """
     def __init__(self, model_path, name = 'NeuralNetwork Player'):
         super().__init__(name)
         self.model = tf.keras.models.load_model(model_path)
@@ -307,6 +371,9 @@ class NeuralNetwrokScorePlayer(Player):
         return [m for m in range(N_COL) if len(board.board[m]) < N_ROW]
 
     def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
         valid_moves = self._valid_moves(board)
         moved_boards = []
         for m in valid_moves:
@@ -319,6 +386,20 @@ class NeuralNetwrokScorePlayer(Player):
         return valid_moves[np.argmax(valid_moves_scores)]
 
 class TwoStagePlayer(Player):
+    """
+    Combine two different Players. 
+
+    Opene player plays the first moves, while the closer plays the last ones.
+
+    Attributes
+    ----------
+    opener: `Player`
+        The player who is going to move during the opening phase.
+    closer: `Player`
+        The player who is going to move during the closing phase.
+    open_stage: `unsigned int`
+        How many moves the opening phase lasts.
+    """
     def __init__(self, opener, closer, open_stage):
         super().__init__(f'{opener.name} & {closer.name}')
         self.played_moves = 0
@@ -327,6 +408,9 @@ class TwoStagePlayer(Player):
         self.open_stage = open_stage
     
     def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
         self.played_moves += 1
         if self.played_moves <= self.open_stage:
             return self.opener.move(board, moves, self_player)
@@ -348,6 +432,9 @@ class PoolPlayer(Player):
         return p.move(board, moves, self_player)
     
     def move(self, board, moves, self_player):
+        """
+        See :func:`GameEngine.Player.move` for arguments explenation.
+        """
         pool = mp.pool.ThreadPool(self.n_jobs)
         async_played_moves = [pool.apply_async(self._p2m, (p, board, moves, self_player)) for p in self.players]
         played_moves = []
@@ -356,6 +443,9 @@ class PoolPlayer(Player):
         return int(mode(played_moves)[0])
     
     def reset(self):
+        """
+        See :func:`GameEngine.Player.reset` for arguments explenation.
+        """
         for p in self.players:
             p.reset()
 

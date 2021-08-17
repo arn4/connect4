@@ -22,7 +22,7 @@ Player 1
 """
 P2 = 2
 """
-Player 1
+Player 2
 """
 NOBODY = 0
 """
