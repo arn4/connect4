@@ -1,0 +1,9 @@
+[run]
+omit =
+    # omit all external packages
+    venv/*
+    # omit test files
+    test/*
+
+[html]
+directory = coverage_html_report

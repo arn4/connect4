@@ -14,7 +14,7 @@ TIED_GAME_SCORE = 1.
 REDUCTION = 0.9
 
 
-class EpsilonGreadyPlayer(NeuralNetwrokScorePlayer):
+class EpsilonGreadyPlayer(TensorFlowScorePlayer):
     def __init__(self, nn_model, epsilon):
         self.model = nn_model
         self.epsilon = epsilon
@@ -36,13 +36,13 @@ class RLNeuralNetworkTrainer():
         self.model_name = model_name
 
             
-    #  @tf.function
-    def _train_step(self, player, boards_batch, scores_batch):
+    # @tf.function
+    def _train_step(self, model, boards_batch, scores_batch):
         with tf.GradientTape() as tape:
-            batch_predictions = self.models[player](boards_batch, training=True)
+            batch_predictions = model(boards_batch, training=True)
             loss_on_batch = self.loss_object(scores_batch, batch_predictions)
-        gradients = tape.gradient(loss_on_batch, self.models[player].trainable_variables)
-        self.optimizer.apply_gradients(zip(gradients, self.models[player].trainable_variables))
+            gradients = tape.gradient(loss_on_batch, model.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
     def _game_with_scores(self, player1, player2, epsilon, reduction):
         g = Game(EpsilonGreadyPlayer(self.models[player1], epsilon), EpsilonGreadyPlayer(self.models[player2], epsilon))
@@ -80,7 +80,6 @@ class RLNeuralNetworkTrainer():
         self.scores_batch = [[] for p in range(self.n_players)]
 
         for episode in tqdm(range(1, episodes + 1)):
-
             # Thread seems to be the best choiche in this case.
             # Probably parallelizing with sprocees is too demanding for the operating system.
             # No parallelization is instead worse
@@ -101,7 +100,7 @@ class RLNeuralNetworkTrainer():
                         np_boards_batch = np.concatenate([np_boards_batch, np_symmetrized_boards_batch])
                         np_scores_batch = np.concatenate([np_scores_batch, np_scores_batch])
                         assert(np_boards_batch.shape[0] == np_scores_batch.shape[0])
-                    self._train_step(p, np_boards_batch, np_scores_batch)
+                    self._train_step(self.models[p], np_boards_batch, np_scores_batch)
                     self.boards_batch[p] = []
                     self.scores_batch[p] = []
             

@@ -362,10 +362,14 @@ class TensorFlowScorePlayer(Player):
         Name used to refer to the player.
     model_path: `string`
         Path to the TensorFlow model that must be loaded.
+    show_scores: `bool`, default: `False`
+        If it is `True` the scores  of each move are printed on `stdout` when
+        method :func:`~Players.TensorFlowScorePlayer.move` is called.
     """
-    def __init__(self, model_path, name = 'NeuralNetwork Player'):
+    def __init__(self, model_path, show_scores=False, name = 'NeuralNetwork Player'):
         super().__init__(name)
         self.model = tf.keras.models.load_model(model_path)
+        self.show_scores = show_scores
 
     def _valid_moves(self, board):
         return [m for m in range(N_COL) if len(board.board[m]) < N_ROW]
@@ -382,12 +386,14 @@ class TensorFlowScorePlayer(Player):
             moved_boards.append(board_copy.as_numpy(self_player))
         # Compute the scores in parallel, it's more than 5x faster than one by one calculation
         valid_moves_scores = self.model.predict(np.array(moved_boards))
-
+        if self.show_scores:
+            for c, s in zip(valid_moves, valid_moves_scores):
+                print(f'{c}: {s}')
         return valid_moves[np.argmax(valid_moves_scores)]
 
 class TwoStagePlayer(Player):
     """
-    Combine two different Players. 
+    Combine two different Players.
 
     Opene player plays the first moves, while the closer plays the last ones.
 
@@ -423,6 +429,23 @@ class TwoStagePlayer(Player):
         self.closer.reset()
 
 class PoolPlayer(Player):
+    """
+    Combine two different Players. 
+
+    Use majority voting for combine the opion of different players.
+
+    Attributes
+    ----------
+    players: `list(Player)`
+        The players.
+    n_jobs: `unsigned int`, default: `None`
+        Numebr of parallel jobs that can be executed.
+        Default is `None` that means max available.
+
+    Note
+    ----
+    The tie-breaking startegy used it's the same as `scipy.stats.mode`.
+    """
     def __init__(self, players, name = 'Pool Player', n_jobs = None):
         super().__init__(name)
         self.players = players

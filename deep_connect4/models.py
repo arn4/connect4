@@ -1,5 +1,6 @@
 from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D
 from tensorflow.keras import Model
+import tensorflow as tf
 
 from connect4.costants import N_ROW, N_COL
 
@@ -36,10 +37,10 @@ class ConvolutionalNeuralNetwork(Model):
 class ScoreConvolutionalNeuralNetwork(Model):
     def __init__(self):
         super(ScoreConvolutionalNeuralNetwork, self).__init__()
-        self.conv = Conv2D(100, kernel_size = 4, input_shape=(N_ROW, N_COL, 1), activation = 'relu')
+        self.conv = Conv2D(150, kernel_size = 4, input_shape=(N_ROW, N_COL, 1), activation = 'relu')
         self.flatten = Flatten()
-        self.hidden1 = Dense(70, activation='relu')
-        self.hidden2 = Dense(70, activation='relu')
+        self.hidden1 = Dense(100, activation='relu')
+        self.hidden2 = Dense(100, activation='relu')
         self.outlayer = Dense(1)
 
     def call(self, x):
@@ -55,9 +56,9 @@ class ScoreNeuralNetwork(Model):
     def __init__(self):
         super(ScoreNeuralNetwork, self).__init__()
         self.flatten = Flatten(input_shape=(N_ROW, N_COL))
-        self.hidden1 = Dense(100, activation='relu')
-        self.hidden2 = Dense(70, activation='relu')
-        self.hidden3 = Dense(70, activation='relu')
+        self.hidden1 = Dense(150, activation='relu')
+        self.hidden2 = Dense(100, activation='relu')
+        self.hidden3 = Dense(100, activation='relu')
         self.outlayer = Dense(1)
 
     def call(self, x):
