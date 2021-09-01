@@ -113,3 +113,38 @@ jobs:
         with:
           name: documentation-html
           path: doc/_build/html/
+  
+  update-gh-pages:
+    needs: [test, lint, doc]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: coverage-html-report 
+          path: coverage-html-report
+
+      - name: Download documentation artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: documentation-html 
+          path: documentation-html
+
+      - name: Clone gh-pages repo and commit new files
+        run: |
+          git clone https://github.com/arn4/connect4.git --branch gh-pages --single-branch gh-pages
+          cp -r coverage-html-report gh-pages/coverage/
+          cp -r documentation-html gh-pages/doc/
+          git config --local user.email "workflows@arn4.github.io"
+          git config --local user.name "Python Workflow"
+          git add .
+          git commit -m "Update documentation and coverage" -a || true
+      
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.TOKEN }}
+
+
