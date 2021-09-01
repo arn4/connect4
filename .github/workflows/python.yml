@@ -36,8 +36,6 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v2
-        with:
-          submodules: recursive
 
       - name: Setup python3.8
         uses: actions/setup-python@v2
@@ -85,11 +83,31 @@ jobs:
       - name: Set up Git repository
         uses: actions/checkout@v2
 
-      - name: Generate documentation
-        uses: ammaraskar/sphinx-action@master
+      - name: Setup python3.8
+        uses: actions/setup-python@v2
         with:
-          docs-folder: doc/
+          python-version: '3.8'
+          architecture: x64
 
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ubuntu-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ubuntu-pip-
+            ubuntu-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build the doc
+        run:  |
+          cd doc
+          make html
+          
       - name: Archive HTML documentation
         uses: actions/upload-artifact@v2
         with:
