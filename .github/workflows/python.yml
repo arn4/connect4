@@ -106,6 +106,7 @@ jobs:
       - name: Build the doc
         run:  |
           cd doc
+          mv deploy-conf.py conf.py
           make html
 
       - name: Archive HTML documentation
