@@ -1,1 +1,2 @@
 trained-models/**/*.pb linguist-vendored
+test/**/*.pb linguist-vendored
