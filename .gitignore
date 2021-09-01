@@ -1,8 +1,9 @@
 perfect-player
 7x6.book
 doc/_*
-doc/source
+doc/make.bat
 test.py
+coverage_html_report/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos
