@@ -1,0 +1,10 @@
+[flake8]
+ignore = E251, 
+max-line-length = 160
+exclude =
+    __pycache__/
+    venv/
+    deep_connect4/
+    test/
+    doc/
+    plots.py    
