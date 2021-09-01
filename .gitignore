@@ -1,5 +1,6 @@
 perfect-player
 7x6.book
+!extra/7x6.book
 doc/_*
 doc/source
 test.py
