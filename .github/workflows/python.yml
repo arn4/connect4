@@ -135,10 +135,10 @@ jobs:
           git commit -m "Update documentation and coverage" -a || true
       
       - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        branch: gh-pages
-        directory: gh-pages
-        github_token: ${{ secrets.TOKEN }}
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.TOKEN }}
 
 
