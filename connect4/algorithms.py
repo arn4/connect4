@@ -1,13 +1,14 @@
 
-from .GameEngine import *
+from .GameEngine import Board
+from .costants import N_ROW, N_COL, P1, P2, NOBODY
 
-## Minimax algorithm parameters
+# Minimax algorithm parameters
 POINT_TO_SCORE = 0
 """
 Factor of conversion between point of winner (see `GameEngine`) and score for the
 algorithms.
 """
-WORSE_SCORE = -2*N_ROW*N_COL+1
+WORSE_SCORE = -2 * N_ROW * N_COL + 1
 """
 Worse score. It's used as indicator of an orrible move.
 """
@@ -23,16 +24,16 @@ MOVES_ORDER = []
 Moves ordered by heuristic.
 """
 if N_COL % 2 == 1:
-    half = int(N_COL/2)
+    half = int(N_COL / 2)
     MOVES_ORDER.append(half)
-    for i in range(1,half+1):
-        MOVES_ORDER.append(half-i)
-        MOVES_ORDER.append(half+i)
+    for i in range(1, half + 1):
+        MOVES_ORDER.append(half - i)
+        MOVES_ORDER.append(half + i)
 else:
-    half = int(N_COL/2)
+    half = int(N_COL / 2)
     for i in range(half):
-        MOVES_ORDER.append(half-1-i)
-        MOVES_ORDER.append(half+i)
+        MOVES_ORDER.append(half - 1 - i)
+        MOVES_ORDER.append(half + i)
 
 MIN_SCORE_STEP = 0.5
 """
@@ -72,7 +73,7 @@ def minimax(moves, depth):
     w, wp = board.evalutate()
 
     if w != NOBODY:
-        score = (N_ROW*N_COL - len(moves))/2 + POINT_TO_SCORE*max(0,wp-4)
+        score = (N_ROW * N_COL - len(moves)) / 2 + POINT_TO_SCORE * max(0, wp - 4)
         if w == player_has_to_move:
             return score
         else:
@@ -83,10 +84,11 @@ def minimax(moves, depth):
     best_score = WORSE_SCORE
     for m in range(N_COL):
         try:
-            best_score = max(best_score, -minimax(moves+[m],depth-1))
+            best_score = max(best_score, -minimax(moves + [m], depth - 1))
         except TypeError:
             pass
     return best_score
+
 
 def alphabeta(moves, depth, alpha, beta):
     """
@@ -94,7 +96,7 @@ def alphabeta(moves, depth, alpha, beta):
 
     Compute the best score reachable from the actual situation.
     We are assuming that the score of a node is always greater or equal to the score of its children.
-    
+
     Parameters
     ----------
     moves: `list`
@@ -108,14 +110,14 @@ def alphabeta(moves, depth, alpha, beta):
         Alpha score of the algorithm.
     beta: float
         Beta score of the algorithm.
-        
+
     Returns
     -------
     float:
         Best scores reachable from the actual situation.
     """
-    board = Board(moves, P1) # WLOG the first player is P1. 
-    # This algorithm works indipendently from the played game, so it does not need to be consistent with 
+    board = Board(moves, P1)  # WLOG the first player is P1.
+    # This algorithm works indipendently from the played game, so it does not need to be consistent with
     # the real game where it is used. The only condition is that it returns the correct maximum score
     # for the player that now has to move.
 
@@ -128,7 +130,7 @@ def alphabeta(moves, depth, alpha, beta):
         player_has_to_move = P2
 
     w, wp = board.evalutate(winner_points = False)
-    score = (N_ROW*N_COL - len(moves))/2
+    score = (N_ROW * N_COL - len(moves)) / 2
     if w != NOBODY:
         if w == player_has_to_move:
             return score
@@ -143,7 +145,7 @@ def alphabeta(moves, depth, alpha, beta):
     best_score = WORSE_SCORE
     for m in MOVES_ORDER:
         try:
-            best_score = max(best_score, -alphabeta(moves+[m],depth-1, -beta, -best_score))
+            best_score = max(best_score, -alphabeta(moves + [m], depth - 1, -beta, -best_score))
             if best_score >= beta:
                 return beta
         except TypeError:

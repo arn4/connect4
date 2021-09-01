@@ -7,11 +7,12 @@ import numpy as np
 from tqdm import tqdm
 from abc import ABC, abstractmethod
 
-from .costants import *
+from .costants import N_ROW, N_COL, P1, P2, NOBODY, RED
 
 ##########
 # PLAYER #
 ##########
+
 
 def change_player(player):
     """
@@ -32,9 +33,9 @@ def change_player(player):
         return P1
     else:
         raise ValueError(f'Unknown player {player}')
-    
 
-class Player(ABC): # pragma: no cover
+
+class Player(ABC):  # pragma: no cover
     """
     Abstract class for players.
 
@@ -79,7 +80,7 @@ class Player(ABC): # pragma: no cover
         ----
         The implementation must take care if the move is allowed or not.
         """
-        return len(moves) % 7 # It's not garantee that the move is allowed!
+        return len(moves) % 7  # It's not garantee that the move is allowed!
 
     def finished(self):
         """
@@ -101,13 +102,14 @@ class Player(ABC): # pragma: no cover
         Returns
         -------
         `numpy.array(shape=(N_COL,))`
-            For each column gives the probability that a player 
+            For each column gives the probability that a player
         """
         raise NotImplementedError("This player has not method probabilities()")
 
 #########
 # BOARD #
 #########
+
 
 class Board():
     """
@@ -140,6 +142,7 @@ class Board():
             means that in the fourth column from left, sixth column
             from bottom there is a coin from Player 2.
     """
+
     def __init__(self, moves = None, starter = None):
         self.empty()
         self.valid = True
@@ -192,7 +195,6 @@ class Board():
             self.valid = False
         self.board[move].append(player)
 
-
     def is_allowed(self, move):
         """
         Check if applying `move` is allowed in the current board.
@@ -216,7 +218,7 @@ class Board():
 
         The function can also compute the number of cell that contributes to the victory.
         A cell is contributing to the victory iff it's filled by a winner coin,
-        and there is a line (vertical, horizontal or diagonal) of at least 4 consecutive 
+        and there is a line (vertical, horizontal or diagonal) of at least 4 consecutive
         contributing cell that contains it. This number it's named *winner points*.
 
         Parameters
@@ -231,7 +233,7 @@ class Board():
         -------
         `tuple(player_tag, unsigned int)`
             The first element of the tuple is the winner, if any. Otherwise is `NOBODY`.
-            The second element are the *winner points*. If `winner_points = False` or there's 
+            The second element are the *winner points*. If `winner_points = False` or there's
             no winner, it'a 0 by default.
 
             If the board is not valid, the reurn is `tuple(None, None)`
@@ -255,67 +257,67 @@ class Board():
                 # Rows
                 try:
                     row_win = True
-                    for k in range(1,4):
-                        row_win = (self.board[j+k][i] == this_cell)
+                    for k in range(1, 4):
+                        row_win = (self.board[j + k][i] == this_cell)
                         if not row_win:
                             break
                     if row_win:
                         winner = this_cell
                         if not winner_points:
                             break
-                        winning_cells.add((j,i))
-                        for k in range(1,4):
-                            winning_cells.add((j+k,i))
+                        winning_cells.add((j, i))
+                        for k in range(1, 4):
+                            winning_cells.add((j + k, i))
                 except IndexError:
                     pass
                 # Cols
                 try:
                     col_win = True
-                    for k in range(1,4):
-                        col_win = (self.board[j][i+k] == this_cell)
+                    for k in range(1, 4):
+                        col_win = (self.board[j][i + k] == this_cell)
                         if not col_win:
                             break
                     if col_win:
                         winner = this_cell
                         if not winner_points:
                             break
-                        winning_cells.add((j,i))
-                        for k in range(1,4):
-                            winning_cells.add((j,i+k))
+                        winning_cells.add((j, i))
+                        for k in range(1, 4):
+                            winning_cells.add((j, i + k))
                 except IndexError:
                     pass
 
                 # Diag direct
                 try:
                     diag_d_win = True
-                    for k in range(1,4):
-                        diag_d_win = (self.board[j+k][i+k] == this_cell)
+                    for k in range(1, 4):
+                        diag_d_win = (self.board[j + k][i + k] == this_cell)
                         if not diag_d_win:
                             break
                     if diag_d_win:
                         winner = this_cell
                         if not winner_points:
                             break
-                        winning_cells.add((j,i))
-                        for k in range(1,4):
-                            winning_cells.add((j+k,i+k))
+                        winning_cells.add((j, i))
+                        for k in range(1, 4):
+                            winning_cells.add((j + k, i + k))
                 except IndexError:
                     pass
 
                 # Diag inverse
                 try:
                     diag_i_win = True
-                    for k in range(1,4):
-                        diag_i_win = (self.board[j+k][i-k] == this_cell) and i-k>=0 # if i-k==-1 we are checking the top element of the column
+                    for k in range(1, 4):
+                        diag_i_win = (self.board[j + k][i - k] == this_cell) and i - k >= 0  # if i-k==-1 we are checking the top element of the column
                         if not diag_i_win:
                             break
                     if diag_i_win:
                         winner = this_cell
                         if not winner_points:
                             break
-                        winning_cells.add((j,i))
-                        for k in range(1,4):
-                            winning_cells.add((j+k,i-k))
+                        winning_cells.add((j, i))
+                        for k in range(1, 4):
+                            winning_cells.add((j + k, i - k))
                 except IndexError:
                     pass
 
@@ -336,7 +338,7 @@ class Board():
         ----------
         one_player: `player_tag`
             The tag of the player represented with 1s in the numpy board.
-        
+
         Returns
         -------
         `np.array`
@@ -351,30 +353,29 @@ class Board():
                     np_board[irow][icol] = int(-1)
         return np_board
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         board_str = ''
         for i in range(N_ROW):
             for j in range(N_COL):
                 board_str += '|'
                 try:
-                    if self.board[j][N_ROW-1-i] == RED:
+                    if self.board[j][N_ROW - 1 - i] == RED:
                         board_str += ':red_circle:'
                     else:
                         board_str += ':yellow_circle:'
                 except IndexError:
                     board_str += ':black_large_square:'
             board_str += '|\n'
-        #board_str += '-'*(2*N_COL+1) + '\n'
-        for i in range(1,N_COL+1):
+        # board_str += '-'*(2*N_COL+1) + '\n'
+        for i in range(1, N_COL + 1):
             board_str += f' :keycap_{i}: '
 
         return emoji.emojize(board_str)
 
 
-
 class Game():
     """
-    
+
     Player1 is using red color, player2 yellow.
     Columns are numbered from 0 to `N_COL`, left to right.
 
@@ -391,15 +392,15 @@ class Game():
 
     finish: `bool`
         `True` only if the game is finished.
-    
+
     moves: `list(move)`
         List of the moves played during the game.
         It's assumed that player are alternating, starting from `self.starter`.
-    
+
     winner: `player_tag`
         `NOBODY` if the game is not finished or ended with a tie.
         Otherwise it's the tag of the winner.
-    
+
     winner_points: `int`
         Points scored by the winner. If `winner=NOBODY` then `winner_point=0`.
 
@@ -411,12 +412,12 @@ class Game():
 
     player2: Player
         Player 2 object.
-    
+
     starter: `player_tag`, default: `P1`
         The player that is sterting the game.
     """
 
-    def  __init__(self, player1, player2, starter = P1):
+    def __init__(self, player1, player2, starter = P1):
         self.starter = starter
         self.turn = starter
         self.p1 = player1
@@ -428,7 +429,6 @@ class Game():
         self.winner = NOBODY
         self.winner_points = 0
 
-
     def check_finish(self):
         """
         Check if the game is finished.
@@ -439,7 +439,7 @@ class Game():
             `True` if the game is ended, otherwise it returns `False`.
         """
         self.winner, self.winner_points = self.board.evalutate()
-        self.finish = (self.winner != NOBODY) or (len(self.moves) == N_ROW*N_COL)
+        self.finish = (self.winner != NOBODY) or (len(self.moves) == N_ROW * N_COL)
         return self.finish
 
     def insert_coin(self, move, player):
@@ -453,7 +453,7 @@ class Game():
         player: `player_tag`
             Player that make the move.
             Raise `AssertionError` if `player != self.turn`.
-        
+
         Note
         ----
         This method is meant for internal use only. If you are going to use it, make sure that you know
@@ -490,7 +490,7 @@ class Game():
         while not self.finish:
             self.next()
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         message_str = ''
         if not self.finish:
             message_str += 'Next moves is up to '
@@ -507,7 +507,7 @@ class Game():
                     winner_name = self.p2.name
                 message_str += f'Winner is {winner_name}, with {self.winner_points} points'
             else:
-                message_str += f"It's a tie!"
+                message_str += "It's a tie!"
 
         return f'{self.board}\n {message_str}'
 
@@ -525,7 +525,7 @@ class Tournament():
 
     player2: Player
         Player 2 object.
-    
+
     starting_criteria: `string`
         Could have 4 values:
         - `'alternate'`: alternate the staring player, starting from `P1`.
@@ -544,6 +544,7 @@ class Tournament():
         - `counter[P1][P1]` -> Games started by `P1` winned by `P1`.
         - `counter[P2][NOBODY]` -> Games started by `P2` winned by `NOBODY`.
     """
+
     def next_starter(self):
         """
         Choose the player who is staring next game.
@@ -574,8 +575,8 @@ class Tournament():
         """
         Reset all the statics collected by the counter.
         """
-        self.counter = np.zeros((3,3), dtype=np.uint32)
-        
+        self.counter = np.zeros((3, 3), dtype=np.uint32)
+
     def __init__(self, player1, player2, starting_criteria = 'alternate'):
         self.player1 = player1
         self.player2 = player2
@@ -600,13 +601,13 @@ class Tournament():
     def finished(self):
         """
         Methods that must be called when the Tournament is ended.
-        
+
         It calls the `finished` method on the Players object.
         """
         self.player1.finished()
         self.player2.finished()
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         return f"""Started by {self.player1.name}, played {self.counter[P1][NOBODY]+self.counter[P1][P1]+self.counter[P1][P2]}:
     Tied {self.counter[P1][NOBODY]} games
     {self.player1.name} won {self.counter[P1][P1]} games
@@ -615,4 +616,3 @@ Started by {self.player2.name}, played {self.counter[P2][NOBODY]+self.counter[P2
     Tied {self.counter[P2][NOBODY]} game
     {self.player1.name} won {self.counter[P2][P1]}
     {self.player2.name} won {self.counter[P2][P2]}"""
-            

@@ -7,12 +7,13 @@ import numpy as np
 import tensorflow as tf
 import subprocess
 from copy import deepcopy
-import operator
 import multiprocessing as mp
 from scipy.stats import mode
 
-from .GameEngine import *
+from .GameEngine import Player
+from .costants import N_ROW, N_COL
 from .algorithms import minimax, alphabeta, WORSE_SCORE, MOVES_ORDER, MIN_SCORE_STEP, SCORE_TO_LOGPROB
+
 
 class FixedMovesPlayer(Player):
     """
@@ -25,6 +26,7 @@ class FixedMovesPlayer(Player):
         Name used to refer to the player.
     moves: `list(move)`
     """
+
     def __init__(self, moves, name = 'FixedMoves Player'):
         super().__init__(name)
         self.moves = moves
@@ -37,11 +39,12 @@ class FixedMovesPlayer(Player):
         m = self.moves[self._index_of_next_move]
         self._index_of_next_move += 1
         return m
-    
+
     def reset(self):
         self._index_of_next_move = 0
 
-class ConsolePlayer(Player): # pragma: no cover
+
+class ConsolePlayer(Player):  # pragma: no cover
     # Can't be tested easilly with pytest.
     """
     Play a game throught console.
@@ -53,6 +56,7 @@ class ConsolePlayer(Player): # pragma: no cover
     name: `string`, default: 'Console Player'
         Name used to refer to the player.
     """
+
     def __init__(self, name = 'Console Player'):
         super().__init__(name)
 
@@ -67,7 +71,8 @@ class ConsolePlayer(Player): # pragma: no cover
         """
         if print_board:
             print(board)
-        return int(input('Which column? '))-1
+        return int(input('Which column? ')) - 1
+
 
 class RandomPlayer(Player):
     """
@@ -80,6 +85,7 @@ class RandomPlayer(Player):
     name: `string`, default: 'Random Player'
         Name used to refer to the player.
     """
+
     def __init__(self, name = 'Random Player'):
         super().__init__(name)
 
@@ -88,16 +94,17 @@ class RandomPlayer(Player):
         See :func:`GameEngine.Player.move` for arguments explenation.
         """
         while True:
-            c = rnd.randint(0, N_COL-1)
+            c = rnd.randint(0, N_COL - 1)
             if len(board.board[c]) < N_ROW:
                 return c
-    
+
     def probabilities(self, board, moves, self_player):
         p = np.zeros((N_COL,))
         for c in range(N_COL):
             if len(board.board[c]) < N_ROW:
                 p[c] = 1.
-        return p/sum(p)
+        return p / sum(p)
+
 
 class MiniMaxPlayer(Player):
     """
@@ -114,6 +121,7 @@ class MiniMaxPlayer(Player):
         If it is `True` the scores  of each moves are printed on `stdout` when
         method :func:`~Players.MiniMaxPlayer.move` is called.
     """
+
     def __init__(self, depth, show_scores = False, name = 'MiniMax Player'):
         super().__init__(name)
         self.depth = depth
@@ -140,7 +148,7 @@ class MiniMaxPlayer(Player):
             is the opponent score if the player do move `i`.
             If move `i` is not allowed there's a `None` instead of a float.
         """
-        return [minimax(moves + [m], self.depth-1) for m in range(N_COL)]
+        return [minimax(moves + [m], self.depth - 1) for m in range(N_COL)]
 
     def _remove_None_from_scores(self, scores):
         for m in range(N_COL):
@@ -155,13 +163,13 @@ class MiniMaxPlayer(Player):
         """
         scores = self.get_opponent_scores_given_move(moves, self_player)
         self._remove_None_from_scores(scores)
-        
+
         if self.show_scores:
             prob = self.probabilities(board, moves, self_player)
             for m in range(N_COL):
                 print(f'{m+1}: {scores[m]:.1f}, prob = {prob[m]:.3f}')
 
-        return max(range(N_COL), key = lambda i: scores[i] if scores[i] is not None else 2*WORSE_SCORE)
+        return max(range(N_COL), key = lambda i: scores[i] if scores[i] is not None else 2 * WORSE_SCORE)
 
     def probabilities(self, board, moves, self_player):
         """
@@ -170,8 +178,9 @@ class MiniMaxPlayer(Player):
         scores = self.get_opponent_scores_given_move(moves, self_player)
         self._remove_None_from_scores(scores)
 
-        p = np.exp(np.array(scores)*SCORE_TO_LOGPROB)
-        return p/sum(p)
+        p = np.exp(np.array(scores) * SCORE_TO_LOGPROB)
+        return p / sum(p)
+
 
 class AlphaBetaPlayer(MiniMaxPlayer):
     """
@@ -188,6 +197,7 @@ class AlphaBetaPlayer(MiniMaxPlayer):
         If it is `True` the scores  of each moves are printed on `stdout` when
         method :func:`~Players.MiniMaxPlayer.move` is called.
     """
+
     def __init__(self, depth, show_scores = False, name = 'Alpha-Beta Player'):
         super().__init__(depth, show_scores, name)
 
@@ -199,10 +209,11 @@ class AlphaBetaPlayer(MiniMaxPlayer):
         See :func:`Players.MiniMaxPlayer.get_opponent_scores_given_move` for arguments explenation.
         """
         return [alphabeta(moves = moves + [m],
-                            alpha = WORSE_SCORE,
-                            beta = -WORSE_SCORE,
-                            depth = self.depth-1)
+                          alpha = WORSE_SCORE,
+                          beta = -WORSE_SCORE,
+                          depth = self.depth - 1)
                 for m in range(N_COL)]
+
 
 class CenteredAlphaBetaPlayer(AlphaBetaPlayer):
     """
@@ -211,6 +222,7 @@ class CenteredAlphaBetaPlayer(AlphaBetaPlayer):
     the probability of exploring the subtree of the best move first, increasing significantly
     the performance of alpha-beta algorithm.
     """
+
     def get_opponent_scores_given_move(self, moves, self_player):
         scores = super().get_opponent_scores_given_move(moves, self_player)
         for i in range(len(MOVES_ORDER)):
@@ -219,6 +231,7 @@ class CenteredAlphaBetaPlayer(AlphaBetaPlayer):
             except TypeError:
                 pass
         return scores
+
 
 class NoisyAlphaBetaPlayer(AlphaBetaPlayer):
     """
@@ -237,6 +250,7 @@ class NoisyAlphaBetaPlayer(AlphaBetaPlayer):
     noise: `float`
         Standard deviation of the gaussian noise.
     """
+
     def __init__(self, depth, noise, show_scores = False, name = 'NoisyAlphaBeta Player'):
         super().__init__(depth, show_scores, name)
         self.noise = noise
@@ -249,6 +263,7 @@ class NoisyAlphaBetaPlayer(AlphaBetaPlayer):
             except TypeError:
                 pass
         return scores
+
 
 class PerfectPlayer(Player):
     """
@@ -264,6 +279,7 @@ class PerfectPlayer(Player):
         If it is `True` the scores  of each moves are printed on `stdout` when
         method :func:`~Players.MiniMaxPlayer.move` is called.
     """
+
     def __init__(self, executable_path, show_scores = False, name = 'Perfect Player'):
         """
         Parameters
@@ -274,9 +290,9 @@ class PerfectPlayer(Player):
         super().__init__(name)
 
         self.oracle = subprocess.Popen([executable_path, '-a'],
-                                        stdout = subprocess.PIPE,
-                                        stdin = subprocess.PIPE,
-                                        stderr = subprocess.PIPE)
+                                       stdout = subprocess.PIPE,
+                                       stdin = subprocess.PIPE,
+                                       stderr = subprocess.PIPE)
         self.oracle.stderr.readline()
         self.show_scores = show_scores
 
@@ -310,6 +326,7 @@ class PerfectPlayer(Player):
                 print(f'{m+1}: {scores[m]}')
         return max(range(N_COL), key = lambda i: int(scores[i]))
 
+
 class TensorFlowProabilitiesPlayer(Player):
     """
     Player that use a TensorFlow/Keras Neural Network to get the proabilitity (or score) of each
@@ -317,7 +334,7 @@ class TensorFlowProabilitiesPlayer(Player):
 
     The model must have an input layer with the same shape of the one defined in
     :func:`~GameEngine.Board.as_numpy`; the output layer must have `N_COL` nodes.
-    The node with the highest probability (score) is choosen as the move. 
+    The node with the highest probability (score) is choosen as the move.
 
 
     Attributes
@@ -327,6 +344,7 @@ class TensorFlowProabilitiesPlayer(Player):
     model_path: `string`
         Path to the TensorFlow model that must be loaded.
     """
+
     def __init__(self, model_path, name = 'TensorFlowProabilities Player'):
         super().__init__(name)
         self.network = tf.keras.models.load_model(model_path)
@@ -353,7 +371,7 @@ class TensorFlowScorePlayer(Player):
     The model must have an input layer with the same shape of the one defined in
     :func:`~GameEngine.Board.as_numpy`; the output layer must have one single node.
     The output is the score of the configuartion.
-     
+
     The player calculate the score of each allowed move he can do and then choose the best.
 
     Attributes
@@ -366,6 +384,7 @@ class TensorFlowScorePlayer(Player):
         If it is `True` the scores  of each move are printed on `stdout` when
         method :func:`~Players.TensorFlowScorePlayer.move` is called.
     """
+
     def __init__(self, model_path, show_scores=False, name = 'NeuralNetwork Player'):
         super().__init__(name)
         self.model = tf.keras.models.load_model(model_path)
@@ -391,6 +410,7 @@ class TensorFlowScorePlayer(Player):
                 print(f'{c}: {s}')
         return valid_moves[np.argmax(valid_moves_scores)]
 
+
 class TwoStagePlayer(Player):
     """
     Combine two different Players.
@@ -406,13 +426,14 @@ class TwoStagePlayer(Player):
     open_stage: `unsigned int`
         How many moves the opening phase lasts.
     """
+
     def __init__(self, opener, closer, open_stage):
         super().__init__(f'{opener.name} & {closer.name}')
         self.played_moves = 0
         self.opener = opener
         self.closer = closer
         self.open_stage = open_stage
-    
+
     def move(self, board, moves, self_player):
         """
         See :func:`GameEngine.Player.move` for arguments explenation.
@@ -422,15 +443,16 @@ class TwoStagePlayer(Player):
             return self.opener.move(board, moves, self_player)
         else:
             return self.closer.move(board, moves, self_player)
-    
+
     def reset(self):
         self.played_moves = 0
         self.opener.reset()
         self.closer.reset()
 
+
 class PoolPlayer(Player):
     """
-    Combine two different Players. 
+    Combine two different Players.
 
     Use majority voting for combine the opion of different players.
 
@@ -446,6 +468,7 @@ class PoolPlayer(Player):
     ----
     The tie-breaking startegy used it's the same as `scipy.stats.mode`.
     """
+
     def __init__(self, players, name = 'Pool Player', n_jobs = None):
         super().__init__(name)
         self.players = players
@@ -453,7 +476,7 @@ class PoolPlayer(Player):
 
     def _p2m(self, p, board, moves, self_player):
         return p.move(board, moves, self_player)
-    
+
     def move(self, board, moves, self_player):
         """
         See :func:`GameEngine.Player.move` for arguments explenation.
@@ -464,12 +487,10 @@ class PoolPlayer(Player):
         for apm in async_played_moves:
             played_moves.append(apm.get())
         return int(mode(played_moves)[0])
-    
+
     def reset(self):
         """
         See :func:`GameEngine.Player.reset` for arguments explenation.
         """
         for p in self.players:
             p.reset()
-
-
