@@ -118,11 +118,17 @@ jobs:
     needs: [test, lint, doc]
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download coverage artifact 
         uses: actions/download-artifact@v2
         with:
-          name: [coverage-html-report, documentation-html]
-          path: .
+          name: coverage-html-report 
+          path: coverage-html-report
+
+      - name: Download documentation artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: documentation-html 
+          path: documentation-html
 
       - name: Clone gh-pages repo and commit new files
         run: |
