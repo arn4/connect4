@@ -135,6 +135,7 @@ jobs:
           git clone https://github.com/arn4/connect4.git --branch gh-pages --single-branch gh-pages
           cp -r coverage-html-report gh-pages/coverage/
           cp -r documentation-html gh-pages/doc/
+          cd gh-pages
           git config --local user.email "workflows@arn4.github.io"
           git config --local user.name "Python Workflow"
           git add .
