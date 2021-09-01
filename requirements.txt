@@ -2,6 +2,7 @@ absl-py==0.13.0
 alabaster==0.7.12
 astunparse==1.6.3
 attrs==21.2.0
+autopep8==1.5.7
 Babel==2.9.0
 cachetools==4.2.2
 certifi==2020.12.5

@@ -188,8 +188,8 @@ def test_all_players_with_Tournament():
 
     # TwoStagePlayer & PoolPlayer
     t = Tournament(
-        TwoStagePlayer(RandomPlayer(), CenteredAlphaBetaPlayer(4), 5),
-        PoolPlayer([RandomPlayer(), RandomPlayer(), CenteredAlphaBetaPlayer(2)])
+        TwoStagePlayer(RandomPlayer(), CenteredAlphaBetaPlayer(4), 1),
+        PoolPlayer([RandomPlayer(), RandomPlayer(), CenteredAlphaBetaPlayer(2)])                        
     )
     t.play_games(2)
     assert(t.counter[P1][P1] == t.counter[P2][P1])
