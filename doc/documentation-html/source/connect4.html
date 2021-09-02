@@ -163,8 +163,8 @@ player has a coin. Empty cell are 0s.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="connect4.GameEngine.Board.evalutate">
-<code class="sig-name descname"><span class="pre">evalutate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">winner_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.GameEngine.Board.evalutate" title="Permalink to this definition">¶</a></dt>
+<dt id="connect4.GameEngine.Board.evaluate">
+<code class="sig-name descname"><span class="pre">evaluate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">winner_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.GameEngine.Board.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if one of the player .</p>
 <p>The function can also compute the number of cell that contributes to the victory.
 A cell is contributing to the victory iff it’s filled by a winner coin,
@@ -194,6 +194,29 @@ no winner, it’a 0 by default.</p>
 <p>The method assumes that the board is in avalid game situation.
 If not, it’s an undefined behavior.</p>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="connect4.GameEngine.Board.fast_evaluate">
+<code class="sig-name descname"><span class="pre">fast_evaluate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.GameEngine.Board.fast_evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the board assuming that the (r,c) cell must be part of the winning line.</p>
+<p>This function is much more faster than normal evaluation since it only check cells near to the given one.
+The algorithm is simple: count how many consecutive cell are equal to the given one in each direction;
+combine the results to check if there’s a winning line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<cite>unsigned int</cite>) – The row index of the given cell.</p></li>
+<li><p><strong>c</strong> (<cite>unsigned int</cite>) – The column index of the given cell.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><cite>True</cite> if the given cell is part of a winning line, <cite>False</cite> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>bool</cite></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -316,6 +339,20 @@ Otherwise it’s the tag of the winner.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><cite>True</cite> if the game is ended, otherwise it returns <cite>False</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><cite>bool</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="connect4.GameEngine.Game.check_tie">
+<code class="sig-name descname"><span class="pre">check_tie</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#connect4.GameEngine.Game.check_tie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the game is a tie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><cite>True</cite> if the game is a tie, otherwise it returns <cite>False</cite>.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><cite>bool</cite></p>
