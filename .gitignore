@@ -3,6 +3,7 @@ perfect-player
 !extra/7x6.book
 doc/_*
 doc/make.bat
+doc/conf.py
 test.py
 coverage_html_report/
 
