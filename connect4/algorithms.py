@@ -70,7 +70,7 @@ def minimax(moves, depth):
     else:
         player_has_to_move = P2
 
-    w, wp = board.evalutate()
+    w, wp = board.evaluate()
 
     if w != NOBODY:
         score = (N_ROW * N_COL - len(moves)) / 2 + POINT_TO_SCORE * max(0, wp - 4)
@@ -129,7 +129,7 @@ def alphabeta(moves, depth, alpha, beta):
     else:
         player_has_to_move = P2
 
-    w, wp = board.evalutate(winner_points = False)
+    w, wp = board.evaluate(winner_points = False)
     score = (N_ROW * N_COL - len(moves)) / 2
     if w != NOBODY:
         if w == player_has_to_move:

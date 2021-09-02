@@ -157,6 +157,23 @@ class Board():
         """
         self.board = [[] for _ in range(N_COL)]
 
+    def _valid_non_empty_cell(self, r, c):
+        """
+        Check if a cell is valid and non empty.
+        Parameters
+        ----------
+        r: `unsigned int`
+            The row index of the given cell.
+        c: `unsigned int`
+            The column index of the given cell.
+
+        Returns
+        -------
+        `bool`
+            `True` if the given cell is part of a winning line, `False` otherwise.
+        """
+        return ((c >= 0) and (c < N_COL) and (len(self.board[c]) > r) and (r >= 0) and (r < N_ROW))
+
     def add_moves(self, moves, starting):
         """
         Add a list of moves to the board.
@@ -212,7 +229,7 @@ class Board():
             return False
         return True
 
-    def evalutate(self, winner_points = True):
+    def evaluate(self, winner_points = True):
         """
         Check if one of the player .
 
@@ -326,6 +343,66 @@ class Board():
         else:
             return winner, 0
 
+    def _direction_counter(self, r, c, dr, dc):
+        count = 0
+        _r = r + dr
+        _c = c + dc
+        while self._valid_non_empty_cell(_r, _c):
+            if self.board[c][r] == self.board[_c][_r]:
+                count += 1
+                _c += dc
+                _r += dr
+            else:
+                break
+        return count
+
+    def fast_evaluate(self, r, c):
+        """
+        Evaluate the board assuming that the (r,c) cell must be part of the winning line.
+
+        This function is much more faster than normal evaluation since it only check cells near to the given one.
+        The algorithm is simple: count how many consecutive cell are equal to the given one in each direction;
+        combine the results to check if there's a winning line.
+
+        Parameters
+        ----------
+        r: `unsigned int`
+            The row index of the given cell.
+        c: `unsigned int`
+            The column index of the given cell.
+
+        Returns
+        -------
+        `bool`
+            `True` if the given cell is part of a winning line, `False` otherwise.
+        """
+        # Comment this lines if you really need performance
+        assert(len(self.board[c]) > r)
+        assert(self.board[c][r] != NOBODY)
+
+        # I'm trying to order the checks by appereance: horizontal, two diagonals and vertical
+        right = self._direction_counter(r, c, 0, +1)
+        left = self._direction_counter(r, c, 0, -1)
+        if left + right + 1 >= 4:
+            return True
+
+        up_right = self._direction_counter(r, c, +1, +1)
+        down_left = self._direction_counter(r, c, -1, -1)
+        if up_right + down_left + 1 >= 4:
+            return True
+
+        up_left = self._direction_counter(r, c, +1, -1)
+        down_right = self._direction_counter(r, c, -1, +1)
+        if up_left + down_right + 1 >= 4:
+            return True
+
+        up = self._direction_counter(r, c, +1, 0)
+        down = self._direction_counter(r, c, -1, 0)
+        if up + down + 1 >= 4:
+            return True
+
+        return False
+
     def as_numpy(self, one_player):
         """
         Return the board as numpy.array.
@@ -435,12 +512,24 @@ class Game():
 
         Returns
         -------
-        `bool`
+        `bool`:
             `True` if the game is ended, otherwise it returns `False`.
         """
-        self.winner, self.winner_points = self.board.evalutate()
-        self.finish = (self.winner != NOBODY) or (len(self.moves) == N_ROW * N_COL)
+        self.winner, self.winner_points = self.board.evaluate()
+        self.finish = (self.winner != NOBODY) or self.check_tie()
         return self.finish
+
+    def check_tie(self):
+        """
+        Check if the game is a tie.
+
+        Returns
+        -------
+        `bool`:
+            `True` if the game is a tie, otherwise it returns `False`.
+        """
+
+        return (len(self.moves) == N_ROW * N_COL)
 
     def insert_coin(self, move, player):
         """
@@ -464,7 +553,10 @@ class Game():
             raise ValueError(f'The column {move} is already full!')
         self.board.add_move(move, player)
         self.moves.append(move)
-        if self.check_finish():
+
+        # The trick of calling the complete evaluation only if the game is really finished speed up the algorithm a lot!
+        if self.board.fast_evaluate(len(self.board.board[move]) - 1, move) or self.check_tie():
+            self.check_finish()
             self.p1.reset()
             self.p2.reset()
 

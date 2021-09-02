@@ -55,12 +55,37 @@ def test_Board_is_allowed():
     assert(b.is_allowed(1))
     assert(not b.is_allowed(0))
 
-def test_Board_evalutate():
-    def assert_evalutation(board, winner, points):
+def test_Board__direction_counter():
+     # Board full of P1
+    b = Board()
+    for r in range(N_ROW):
+        for c in range(N_COL):
+            b.add_move(c, P1)
+    
+    assert(b._direction_counter(0, 0, 1, 0) == N_ROW - 1)
+    assert(b._direction_counter(0, 0, 0, 1) == N_COL - 1)
+    assert(b._direction_counter(0, 0, 1, 1) == min(N_ROW, N_COL) - 1)
+    assert(b._direction_counter(0, 0, -1, 0) == 0)
+    assert(b._direction_counter(0, 0, 0, -1) == 0)
+    assert(b._direction_counter(0, 0, 1, -1) == 0)
+    assert(b._direction_counter(0, 0, -1, 1) == 0)
+    assert(b._direction_counter(0, 0, -1, -1) == 0)
+
+    assert(b._direction_counter(N_ROW-1, N_COL-1, 1, 0) == 0)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, 0, 1) == 0)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, 1, 1) == 0)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, -1, 0) == N_ROW - 1)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, 0, -1) == N_COL - 1)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, 1, -1) == 0)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, -1, 1) == 0)
+    assert(b._direction_counter(N_ROW-1, N_COL-1, -1, -1) == min(N_ROW, N_COL) - 1)
+
+def test_Board_evaluate():
+    def assert_evaluation(board, winner, points):
         if points is not None:
-            winner, wp = board.evalutate(True)
+            winner, wp = board.evaluate(True)
         else:
-            winner, wp = board.evalutate(False)
+            winner, wp = board.evaluate(False)
 
         assert(winner == winner)
         if points is not None:
@@ -73,22 +98,22 @@ def test_Board_evalutate():
     for r in range(N_ROW):
         for c in range(N_COL):
             b.add_move(c, P1)
-    assert_evalutation(b, P1, None)
-    assert_evalutation(b, P1, N_ROW*N_COL)
+    assert_evaluation(b, P1, None)
+    assert_evaluation(b, P1, N_ROW*N_COL)
 
     # Row P1
     b = Board()
     for c in range(4):
         b.add_move(c, P1)
-    assert_evalutation(b, P1, None)
-    assert_evalutation(b, P1, 4)
+    assert_evaluation(b, P1, None)
+    assert_evaluation(b, P1, 4)
 
     # Col P2
     b = Board()
     for _ in range(4):
         b.add_move(2, P2)
-    assert_evalutation(b, P2, None)
-    assert_evalutation(b, P2, 4)
+    assert_evaluation(b, P2, None)
+    assert_evaluation(b, P2, 4)
     
     # Diagonal Direct P2
     b = Board()
@@ -96,8 +121,8 @@ def test_Board_evalutate():
         for r in range(c):
             b.add_move(c, P1)
         b.add_move(c, P2)
-    assert_evalutation(b, P2, None)
-    assert_evalutation(b, P2, 4)
+    assert_evaluation(b, P2, None)
+    assert_evaluation(b, P2, 4)
 
     # Diagonal Inverse P1
     b = Board()
@@ -105,17 +130,17 @@ def test_Board_evalutate():
         for r in range(3-c):
             b.add_move(c, P1)
         b.add_move(c, P2)
-    assert_evalutation(b, P1, None)
-    assert_evalutation(b, P1, 4)
+    assert_evaluation(b, P1, None)
+    assert_evaluation(b, P1, 4)
 
     # Nobody
     b = Board()
-    assert_evalutation(b, NOBODY, None)
-    assert_evalutation(b, NOBODY, 0)
+    assert_evaluation(b, NOBODY, None)
+    assert_evaluation(b, NOBODY, 0)
 
     # Not valid 
     b = Board([0]*(N_ROW + 1), P1)
-    assert(b.evalutate() == (None, None))
+    assert(b.evaluate() == (None, None))
 
 def test_Board_as_numpy():
     # Empty
