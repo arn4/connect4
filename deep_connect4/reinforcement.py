@@ -9,8 +9,8 @@ from connect4.costants import *
 from connect4.GameEngine import *
 from connect4.Players import *
 
-WON_GAME_SCORE = 10.
-TIED_GAME_SCORE = 1.
+WON_GAME_SCORE = 1.
+TIED_GAME_SCORE = 0.
 REDUCTION = 0.9
 
 
@@ -18,6 +18,7 @@ class EpsilonGreadyPlayer(TensorFlowScorePlayer):
     def __init__(self, nn_model, epsilon):
         self.model = nn_model
         self.epsilon = epsilon
+        self.show_scores = False
 
     def move(self, board, moves, self_player):
         valid_moves = self._valid_moves(board)
@@ -28,21 +29,28 @@ class EpsilonGreadyPlayer(TensorFlowScorePlayer):
 
 class RLNeuralNetworkTrainer():
     def __init__(self, neural_network_model, n_players, model_name):
-        self.models = [neural_network_model() for i in range(n_players)]
+        self.models = [neural_network_model() for _ in range(n_players)]
         self.n_players = n_players
-        self.loss_object = tf.keras.losses.MeanSquaredError()
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.loss_objects = [tf.keras.losses.MeanSquaredError() for _ in range(n_players)]
+        self.optimizers = [tf.keras.optimizers.Adam() for _ in range(n_players)]
+        self._train_step = [self._train_step_function_on_model(p) for p in range(n_players)]
 
         self.model_name = model_name
 
             
-    # @tf.function
-    def _train_step(self, model, boards_batch, scores_batch):
-        with tf.GradientTape() as tape:
-            batch_predictions = model(boards_batch, training=True)
-            loss_on_batch = self.loss_object(scores_batch, batch_predictions)
-            gradients = tape.gradient(loss_on_batch, model.trainable_variables)
-        self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    def _train_step_function_on_model(self, p):
+        @tf.function(
+            # experimental_relax_shapes=True,
+            # jit_compile=True
+        )
+        def train_step(boards_batch, scores_batch):
+            with tf.GradientTape() as tape:
+                batch_predictions = self.models[p](boards_batch, training=True)
+                loss_on_batch = self.loss_objects[p](scores_batch, batch_predictions)
+            gradients = tape.gradient(loss_on_batch, self.models[p].trainable_variables)
+            self.optimizers[p].apply_gradients(zip(gradients, self.models[p].trainable_variables))
+            
+        return train_step
 
     def _game_with_scores(self, player1, player2, epsilon, reduction):
         g = Game(EpsilonGreadyPlayer(self.models[player1], epsilon), EpsilonGreadyPlayer(self.models[player2], epsilon))
@@ -65,13 +73,15 @@ class RLNeuralNetworkTrainer():
         
         assert(len(collected_states[P1]) == len(collected_scores[P1]))
         assert(len(collected_states[P2]) == len(collected_scores[P2]))
+
+        # print(f'{player1}: {len(collected_states[P1])}, {player2}: {len(collected_states[P2])}')
         
         self.boards_batch[player1] += collected_states[P1]
         self.scores_batch[player1] += collected_scores[P1]
         self.boards_batch[player2] += collected_states[P2]
         self.scores_batch[player2] += collected_scores[P2]
 
-    def train(self, episodes, epsilon_decay, batch_size, use_symmetry = True, save_every = None, n_jobs = None):
+    def train(self, episodes, epsilon_decay, batch_size, min_epsilon = 0., use_symmetry = True, save_every = None, n_jobs = None):
         if save_every is None:
             save_every = episodes
 
@@ -86,12 +96,13 @@ class RLNeuralNetworkTrainer():
             games_pool = mp.pool.ThreadPool(n_jobs)
             # games_pool = mp.Pool(n_jobs)
             for p1, p2 in zip(range(self.n_players), range(self.n_players)):
-                # self._game_with_scores(p1, p2, epsilon, REDUCTION)
+                self._game_with_scores(p1, p2, epsilon, REDUCTION)
                 games_pool.apply_async(self._game_with_scores, (p1, p2, epsilon, REDUCTION))
             games_pool.close()
             games_pool.join()
 
             for p in range(self.n_players):
+                # print(len(self.boards_batch[p]))
                 if len(self.boards_batch[p]) > batch_size:
                     np_boards_batch = np.array(self.boards_batch[p])
                     np_scores_batch = np.array(self.scores_batch[p])
@@ -100,7 +111,7 @@ class RLNeuralNetworkTrainer():
                         np_boards_batch = np.concatenate([np_boards_batch, np_symmetrized_boards_batch])
                         np_scores_batch = np.concatenate([np_scores_batch, np_scores_batch])
                         assert(np_boards_batch.shape[0] == np_scores_batch.shape[0])
-                    self._train_step(self.models[p], np_boards_batch, np_scores_batch)
+                    self._train_step[p](np_boards_batch, np_scores_batch)
                     self.boards_batch[p] = []
                     self.scores_batch[p] = []
             
@@ -109,4 +120,4 @@ class RLNeuralNetworkTrainer():
                     print(f'Saving {self.model_name}_ep-{episode}_id-{p}')
                     self.models[p].save(self.model_name + f'_ep-{episode}_id-{p}')
 
-            epsilon *= epsilon_decay
+            epsilon = max(epsilon*epsilon_decay, min_epsilon)
