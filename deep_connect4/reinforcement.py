@@ -81,7 +81,7 @@ class RLNeuralNetworkTrainer():
         self.boards_batch[player2] += collected_states[P2]
         self.scores_batch[player2] += collected_scores[P2]
 
-    def train(self, episodes, epsilon_decay, batch_size, min_epsilon = 0., use_symmetry = True, save_every = None, n_jobs = None):
+    def train(self, episodes, epsilon_decay, batch_size, min_epsilon = 0., decay_strategy = 'exponential', use_symmetry = True, save_every = None, n_jobs = None):
         if save_every is None:
             save_every = episodes
 
@@ -120,4 +120,9 @@ class RLNeuralNetworkTrainer():
                     print(f'Saving {self.model_name}_ep-{episode}_id-{p}')
                     self.models[p].save(self.model_name + f'_ep-{episode}_id-{p}')
 
-            epsilon = max(epsilon*epsilon_decay, min_epsilon)
+            if decay_strategy == 'exponential':
+                epsilon = max(epsilon*epsilon_decay, min_epsilon)
+            elif decay_strategy == 'linear':
+                epsilon = max(epsilon - epsilon_decay, min_epsilon)
+            else:
+                raise NotImplementedError(f'Unknown decay strategy "{decay_strategy}".')
