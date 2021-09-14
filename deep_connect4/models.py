@@ -23,12 +23,14 @@ class NeuralNetwork(Model):
 class ConvolutionalNeuralNetwork(Model):
     def __init__(self):
         super(ConvolutionalNeuralNetwork, self).__init__()
-        self.conv = Conv2D(100, 4, input_shape=(N_ROW, N_COL))
+        self.conv = Conv2D(100, kernel_size = 4, input_shape=(N_ROW, N_COL, 1), activation = 'relu')
         self.hidden1 = Dense(50, activation='relu')
         self.hidden2 = Dense(50, activation='relu')
         self.outlayer = Dense(N_COL)
 
     def call(self, x):
+        x = tf.expand_dims(x, 3) # I need to had a channel dimemension to use Conv2D layer
+        x = tf.cast(x, tf.float32) # I need to convert to an allowed dtype for convolutional network
         x = self.conv(x)
         x = self.hidden1(x)
         x = self.hidden2(x)
