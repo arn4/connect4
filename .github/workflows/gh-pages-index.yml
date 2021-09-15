@@ -1,0 +1,33 @@
+name: gh-pages
+on: [push]
+jobs:
+  gh-pages-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+
+      - name: Installing PanDoc
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y pandoc
+
+      - name: Converting README.md in index.html
+        run: pandoc -f commonmark -s README.md -o index.html
+
+      - name: Clone gh-pages repo and commit new files
+        run: |
+          git clone https://github.com/arn4/connect4.git --branch gh-pages --single-branch gh-pages
+          cp index.html gh-pages/
+          cd gh-pages
+          git config --local user.email "workflows@arn4.github.io"
+          git config --local user.name "gh-pages Workflow"
+          git add .
+          git commit -m "Update index.html document" -a || true
+      
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.TOKEN }}
