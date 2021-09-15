@@ -115,7 +115,7 @@ jobs:
           name: documentation-html
           path: doc/_build/html/
   
-  update-gh-pages:
+  update-gh-pages-python:
     needs: [test, lint, doc]
     runs-on: ubuntu-latest
     steps:

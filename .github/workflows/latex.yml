@@ -1,0 +1,48 @@
+name: LaTex
+on: [push]
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+
+      - uses: xu-cheng/latex-action@v2
+        with:
+          working_directory: latex/
+          root_file: description.tex
+          latexmk_shell_escape: true
+
+      - name: Archive Descrption Document
+        uses: actions/upload-artifact@v2
+        with:
+          name: description-document
+          path: latex/description.pdf
+
+  update-gh-pages-latex:
+    needs: compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download description artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: description-document 
+          path: ./
+
+      - name: Clone gh-pages repo and commit new files
+        run: |
+          git clone https://github.com/arn4/connect4.git --branch gh-pages --single-branch gh-pages
+          cp -r description.pdf gh-pages/
+          cd gh-pages
+          git config --local user.email "workflows@arn4.github.io"
+          git config --local user.name "LaTex Workflow"
+          git add .
+          git commit -m "Update descrption document" -a || true
+      
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.TOKEN }}
+  
