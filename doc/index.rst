@@ -10,8 +10,7 @@ Welcome to connect4's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme
-   source/modules
+   source/connect4
 
 
 
