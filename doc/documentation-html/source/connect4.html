@@ -18,7 +18,7 @@
     <link rel="canonical" href="doc/source/connect4.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="connect4" href="modules.html" />
+    <link rel="prev" title="Welcome to connect4’s documentation!" href="../index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -34,10 +34,9 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="connect4"
+          <a href="../index.html" title="Welcome to connect4’s documentation!"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">connect4  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">connect4</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">connect4 package</a></li> 
       </ul>
     </div>  
@@ -49,9 +48,6 @@
             
   <div class="section" id="connect4-package">
 <h1>connect4 package<a class="headerlink" href="#connect4-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
 <div class="section" id="module-connect4.GameEngine">
 <span id="connect4-gameengine-module"></span><h2>connect4.GameEngine module<a class="headerlink" href="#module-connect4.GameEngine" title="Permalink to this headline">¶</a></h2>
 <p>The game engine for Connect4.</p>
@@ -1158,58 +1154,6 @@ method <code class="xref py py-func docutils literal notranslate"><span class="p
 </dd></dl>
 
 </div>
-<div class="section" id="module-connect4.TestcaseGenerator">
-<span id="connect4-testcasegenerator-module"></span><h2>connect4.TestcaseGenerator module<a class="headerlink" href="#module-connect4.TestcaseGenerator" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt id="connect4.TestcaseGenerator.DatasetGenerator">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">connect4.TestcaseGenerator.</span></code><code class="sig-name descname"><span class="pre">DatasetGenerator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">player1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">player2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supervisor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.DatasetGenerator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt id="connect4.TestcaseGenerator.DatasetGenerator.run">
-<code class="sig-name descname"><span class="pre">run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_games</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.DatasetGenerator.run" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="connect4.TestcaseGenerator.DatasetGenerator.save">
-<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.DatasetGenerator.save" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="connect4.TestcaseGenerator.SupervisedGame">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">connect4.TestcaseGenerator.</span></code><code class="sig-name descname"><span class="pre">SupervisedGame</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">player1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">player2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supervisor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.SupervisedGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#connect4.GameEngine.Game" title="connect4.GameEngine.Game"><code class="xref py py-class docutils literal notranslate"><span class="pre">connect4.GameEngine.Game</span></code></a></p>
-<p>Play a game between two players, with a supervisor that annotates which moves he would do in each situation.</p>
-<dl class="py method">
-<dt id="connect4.TestcaseGenerator.SupervisedGame.get_testcases">
-<code class="sig-name descname"><span class="pre">get_testcases</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.SupervisedGame.get_testcases" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the testcases generated during the game.</p>
-<p>This method should return which move the player would like to do
-given the game situation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>transient</strong> (<cite>int</cite>:) – Number of initial moves to not be considered when genereting testcases.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>List of tuples. Each tuple contains the board, in numpy.array format :func:Board.as_numpy</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><cite>list(tuple(numpy.array(shape(N_ROW, NCOLS)), numpy.array(shape(NCOLS))))</cite></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="connect4.TestcaseGenerator.SupervisedGame.next">
-<code class="sig-name descname"><span class="pre">next</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#connect4.TestcaseGenerator.SupervisedGame.next" title="Permalink to this definition">¶</a></dt>
-<dd><p>Next move in the game.</p>
-<p>Record what supervisor would do in this situation.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="module-connect4.algorithms">
 <span id="connect4-algorithms-module"></span><h2>connect4.algorithms module<a class="headerlink" href="#module-connect4.algorithms" title="Permalink to this headline">¶</a></h2>
 <dl class="py data">
@@ -1343,9 +1287,6 @@ Moves do not distinguish wich player did it.</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="module-connect4">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-connect4" title="Permalink to this headline">¶</a></h2>
-</div>
 </div>
 
 
@@ -1358,20 +1299,17 @@ Moves do not distinguish wich player did it.</p></li>
   <h3><a href="../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">connect4 package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-connect4.GameEngine">connect4.GameEngine module</a></li>
 <li><a class="reference internal" href="#module-connect4.Players">connect4.Players module</a></li>
-<li><a class="reference internal" href="#module-connect4.TestcaseGenerator">connect4.TestcaseGenerator module</a></li>
 <li><a class="reference internal" href="#module-connect4.algorithms">connect4.algorithms module</a></li>
 <li><a class="reference internal" href="#module-connect4.costants">connect4.costants module</a></li>
-<li><a class="reference internal" href="#module-connect4">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="previous chapter">connect4</a></p>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to connect4’s documentation!</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1403,10 +1341,9 @@ Moves do not distinguish wich player did it.</p></li>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="connect4"
+          <a href="../index.html" title="Welcome to connect4’s documentation!"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">connect4  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >connect4</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">connect4 package</a></li> 
       </ul>
     </div>
