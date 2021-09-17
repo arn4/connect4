@@ -29,16 +29,16 @@
 \begin{document}
   \maketitle
   \begin{abstract}
-    The goal of this project is to train a DNN to play \emph{Connect 4}. Although the game has been completely solved many years ago, it still offers a really interesting environment where training and testing neural networks. First of all, I've implemented a game engine that allows playing games and tournaments between players based on many different classical strategies. after that, I've used the data collected from many games between the known agents, in order to train a convolutional neural network with supervised learning. In the end, I've explored reinforcement learning techniques to create a neural network that is able to play without relying on an external agent for training. 
+    The goal of this project is to train a DNN to play \emph{Connect 4}. Although the game has been completely solved many years ago, it still offers a really interesting environment where training and testing neural networks. First of all, I've implemented a game engine that allows playing games and tournaments between players based on many different classical strategies. After that, I've used the data collected from many games between the known agents, in order to train a convolutional neural network with supervised learning. In the end, I've explored reinforcement learning techniques to create a neural network that is able to play without relying on an external agent for training. 
   \end{abstract}
   
   \emph{Connect-4} is a game where two players challenge each other in making a connection of 4 checks on a \(6\times7\) board\footnote{More on \emph{Connect4} rules at \href{https://en.wikipedia.org/wiki/Connect_Four}{Wikipedia}.}. 
-  Since it is a perfect information game and the number of states is relatively limited, the game can be completely solved through enchanted brute-force techniques. Nevertheless, it is interesting to address the problem using Deep Neural Networks, since deterministic algorithms allow to evaluate exactly the performance of the machine learning ones.
+  Since it is a perfect information game and the number of states is relatively limited, the game can be completely solved through enchanted brute-force techniques. Nevertheless, it is interesting to address the problem using Deep Neural Networks, since standard algorithms allow to evaluate exactly the performance of the machine learning ones.
   
   \paragraph{Game Engine}
   The first thing to do is writing a game engine that allows playing the game, it asserts that each move is an allowed position and checks for the winner. I've chosen to code in \texttt{Python}. The 3 principal classes of the GameEngine are:
   \begin{itemize}
-    \item \ipy{Board}: it handles the board and all the methods to modify and check it. It's not contained in \ipy{Game} class since some strategies need methods on the board, but not a complete game 
+    \item \ipy{Board}: it handles the board and all the methods to modify and check it. It's not contained in \ipy{Game} class since some strategies need methods on the board, but not a complete game. 
     \item \ipy{Game}: it handles the alternation between players' moves by calling the proper methods on \ipy{Player} objects at the right time. 
     \item \ipy{Player}: it's an \emph{abstract class} that must be the base class of all players.
   \end{itemize}
@@ -49,10 +49,10 @@
       \begin{itemize}
         \item \ipy{RandomPlayer}: plays a random move between the allowed ones.
         \item \ipy{ConsolePlayer}: read the move from \texttt{stdin}.
-        \item \ipy{FixedMovesPlayer}: Play a given sequence of moves. Used principally for unit testing.
+        \item \ipy{FixedMovesPlayer}: plays a given sequence of moves. Used principally for unit testing.
       \end{itemize}
     \item \emph{Search Players}: these players are all based on the \emph{minimax algorithm} applied to the moves tree.
-      Most of these players use the \emph{alpha-beta pruning} technique to speed up the exploration. In addition to the classic implementations, there is a version that uses a heuristic on the move order, and another that adds up random noise to the moves score in order to make the strategy not deterministic.
+      Most of these players use the \emph{alpha-beta pruning} technique to speed up the exploration. In addition to the classic implementations, there is a version that uses a heuristic  move order, and another that adds up random noise to the moves score in order to make the strategy not deterministic.
       
       This category includes also the \ipy{PerfectPlayer}, which is nothing more than a wrapper for my engine of a \texttt{C++} implementation of a full search algorithm\cite{perfectsolvertutotial, perfectsolverimplementation}, that I've included in my repository as a submodule. 
     \item \emph{Combination Players}: players that combine the strategy of two or more other players.
@@ -120,8 +120,8 @@
     \label{fig:decays}
   \end{figure}
 
-  I've tested all these hypotheses and the results are shown in Figure~\ref{fig:reinforcement10k}. It's clear that the flattened neural network is worse than all the others, so the initial choice of using a convolutional one is correct. There is no appreciable difference between linear and exponential decay, but since the former make the learning faster, the linear one is preferable.
-  \emph{Multi-training} does not significantly boost learning, but it outputs three independent models that can be combined with \ipy{PoolPlayer}. Moreover, training more than one agent does not affect the performance too much since most of the jobs can be parallelized.
+  I've tested all these hypotheses and the results are shown in Figure~\ref{fig:reinforcement10k}. It's clear that the flattened neural network is worse than all the others, so the initial choice of using a convolutional one is correct. There is no appreciable difference between linear and exponential decay, but since the former makes the learning faster, the linear one is preferable.
+  \emph{Multi-training} does not significantly boost learning, but it outputs three independent models that can be combined with \ipy{PoolPlayer}\footnote{\ipy{PoolPlayer} combines a group of indipendent players ysing majority voting.}. Moreover, training more than one agent does not affect the performance too much since most of the jobs can be parallelized.
  
   I've decided to go with a 50000 episodes multi-training of 3 agents, with linear decay. The result is plotted in Figure~\ref{fig:reinforcement50k}. As already seen in the 10000 training, the performance peaks after a relatively small part of the learning and starts dropping after that. This could be a manifestation of \emph{catastrophic forgetting}\cite{kirkpatrick2017overcoming}: after early stages of learning the agents start to explore different game phases and forget how to deal with early the stages of the match, resulting in a performance decrease. Dealing with these kinds of problems is beyond the scope of this project; the simplest thing we can do is combine the 3 agents by picking their best performance. Using a \ipy{PoolPlayer} we get a \(57.0\si{\percent}\) against \ipy{AlphaBetaPlayer(3)}.
   
