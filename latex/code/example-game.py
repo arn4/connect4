@@ -1,5 +1,6 @@
 from connect4.GameEngine import Game
 from connect4.Players import NoisyAlphaBetaPlayer, PerfectPlayer
+from connect4.costants import P2
 
 g = Game(
   NoisyAlphaBetaPlayer(depth = 7, noise = 0.5, name = 'Yukihiro Matsumoto'),

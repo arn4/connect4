@@ -7,4 +7,5 @@ exclude =
     deep_connect4/
     test/
     doc/
-    plots.py    
+    plots.py
+    latex/code/example-game.py  
