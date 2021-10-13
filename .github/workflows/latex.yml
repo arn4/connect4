@@ -19,7 +19,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: description-document
-          path: latex/description.pdf
+          path: |
+            latex/description.pdf
+            latex/slides.pdf
 
   update-gh-pages-latex:
     needs: compile
@@ -35,6 +37,7 @@ jobs:
         run: |
           git clone https://github.com/arn4/connect4.git --branch gh-pages --single-branch gh-pages
           cp -r description.pdf gh-pages/
+          cp -r slides.pdf gh-pages/
           cd gh-pages
           git config --local user.email "workflows@arn4.github.io"
           git config --local user.name "LaTex Workflow"
