@@ -12,5 +12,6 @@ The goal of this project is to train a DNN to play _Connect 4_. Although the gam
  - **[Description](https://arn4.github.io/connect4/description.pdf)**: document with an explemation of goals and results of this project.
  - **[Documentation](https://arn4.github.io/connect4/doc/)**: documentation of most of the written code.
  - **[Coverage](https://arn4.github.io/connect4/coverage/)**: coverage report from unit tests.
+ - **[Slides](https://arn4.github.io/connect4/slides.pdf)**: slides for the exam (Italian language).
 
 
